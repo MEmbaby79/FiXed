@@ -3,34 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SISI Global — Smart Irrigation Suitability Index | Egypt GIS Registry</title>
+<title>SISI — Smart Irrigation Suitability Index | Secure Registry</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
-#app{max-width:1100px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 20px rgba(0,0,0,.07)}
-.header{padding:1.2rem 1.5rem 1rem;border-bottom:1px solid #e0e0e0;background:linear-gradient(135deg,#1565c0 0%,#0d47a1 100%);color:#fff}
-.header h1{font-size:19px;font-weight:600}
-.header p{font-size:11px;opacity:.85;margin-top:3px}
-.header-row2{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
-.save-chip{padding:2px 10px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.5);color:#fff}
-.save-chip.saved{background:rgba(46,204,113,.25);border-color:#2ecc71}
-.save-chip.saving{background:rgba(255,165,0,.2);border-color:orange}
-.save-chip.offline{background:rgba(231,76,60,.2);border-color:#e74c3c}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
+#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0d47a1 0%,#1565c0 50%,#1a237e 100%)}
+.auth-box{background:#fff;border-radius:16px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-logo{text-align:center;margin-bottom:1.5rem}
+.auth-logo h1{font-size:22px;font-weight:700;color:#1565c0;margin-top:8px}
+.auth-logo p{font-size:11px;color:#888;margin-top:4px;line-height:1.6}
+.auth-tabs{display:flex;border-bottom:2px solid #e0e7ff;margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;color:#9aa3bf;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.auth-tab.active{color:#1565c0;border-bottom-color:#1565c0}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.auth-field{display:flex;flex-direction:column;gap:5px}
+.auth-field label{font-size:12px;font-weight:600;color:#555}
+.auth-field input{padding:10px 12px;border:1.5px solid #d0d7f0;border-radius:8px;font-size:13px;font-family:inherit}
+.auth-field input:focus{outline:none;border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+.auth-btn{padding:11px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .2s}
+.auth-btn:hover{background:#0d47a1}
+.auth-btn:disabled{background:#9aa3bf;cursor:not-allowed}
+.auth-error{background:#fce4ec;border:1px solid #e57373;border-radius:7px;padding:9px 12px;font-size:12px;color:#c62828;display:none}
+.auth-success{background:#e8f5e9;border:1px solid #66bb6a;border-radius:7px;padding:9px 12px;font-size:12px;color:#2e7d32;display:none}
+#mainApp{display:none;max-width:1100px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 30px rgba(0,0,0,.08)}
+.header{padding:1rem 1.5rem;background:linear-gradient(135deg,#1565c0 0%,#0d47a1 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.header-left h1{font-size:17px;font-weight:700}
+.header-left p{font-size:10px;opacity:.8;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:600}
+.save-chip{padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.4)}
+.save-chip.saved{background:rgba(46,204,113,.3);border-color:#2ecc71}
+.save-chip.saving{background:rgba(255,165,0,.25);border-color:orange}
+.logout-btn{background:rgba(231,76,60,.3);border:1px solid rgba(231,76,60,.6);color:#fff;border-radius:6px;padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer}
+.logout-btn:hover{background:rgba(231,76,60,.5)}
 .tabs{display:flex;border-bottom:1px solid #e0e0e0;padding:0 1rem;background:#fff;overflow-x:auto}
 .tab{padding:10px 14px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
 .tab.active{color:#1565c0;border-bottom-color:#1565c0}
 .tab:hover:not(.active){color:#333}
 .content{display:none;padding:1.2rem 1.5rem}
 .content.active{display:block}
-#map{width:100%;height:460px;border-radius:10px;overflow:hidden;border:1px solid #ddd}
+#map{width:100%;height:450px;border-radius:10px;overflow:hidden;border:1px solid #ddd}
 .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
 .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 .farm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-bottom:1rem}
-.farm-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:11px;cursor:pointer;transition:border-color .2s,box-shadow .2s;position:relative}
-.farm-card:hover,.farm-card.selected{border-color:#1565c0;box-shadow:0 2px 10px rgba(21,101,192,.15)}
-.farm-card .user-tag{position:absolute;top:7px;right:7px;background:#e8f5e9;color:#2e7d32;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.farm-card{background:#fff;border:1.5px solid #e0e7ff;border-radius:10px;padding:11px;cursor:pointer;transition:all .2s;position:relative}
+.farm-card:hover,.farm-card.selected{border-color:#1565c0;box-shadow:0 2px 12px rgba(21,101,192,.15)}
+.farm-card .mine-tag{position:absolute;top:7px;right:7px;background:#e8f5e9;color:#2e7d32;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.farm-card .pilot-tag{position:absolute;top:7px;right:7px;background:#e3f2fd;color:#1565c0;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
 .farm-badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .level-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
 .detail-panel{background:#f8f9fa;border-radius:10px;padding:1.1rem;margin-top:1rem;border:1px solid #e0e0e0}
@@ -47,7 +69,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-group{display:flex;flex-direction:column;gap:4px}
 .form-group label{font-size:12px;color:#555;font-weight:500}
-.form-group input,.form-group select,.form-group textarea{padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:12px;background:#fff;font-family:inherit;color:#222}
+.form-group input,.form-group select{padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:12px;background:#fff;font-family:inherit;color:#222}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:#1565c0}
 .btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
 .btn:hover{opacity:.88;transform:translateY(-1px)}
@@ -55,9 +77,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
 .btn-success{background:#2e7d32;color:#fff}
 .btn-warning{background:#e65100;color:#fff}
 .btn-info{background:#0277bd;color:#fff}
-.btn-purple{background:#6a1b9a;color:#fff}
 .btn-teal{background:#00695c;color:#fff}
-.btn-danger{background:#c62828;color:#fff}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .score-box{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:1.1rem;margin-top:10px}
 .formula-box{background:#e8f4fd;border-radius:7px;padding:8px 12px;font-size:12px;font-family:monospace;color:#1565c0;margin-bottom:10px;border:1px solid #90caf9}
@@ -67,19 +87,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
 .registry-table td{padding:6px 8px;border-bottom:1px solid #eee}
 .registry-table tr:hover td{background:#f8f9ff}
 .compare-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
-.compare-bar-fill{height:24px;border-radius:5px;display:flex;align-items:center;padding:0 9px;color:#fff;font-weight:700;font-size:11px;min-width:50px;transition:width .4s}
+.compare-bar-fill{height:24px;border-radius:5px;display:flex;align-items:center;padding:0 9px;color:#fff;font-weight:700;font-size:11px;min-width:50px}
 .filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1rem}
 .filter-btn{padding:4px 12px;border-radius:999px;font-size:12px;cursor:pointer;background:#f0f0f0;border:1px solid #ddd;color:#555}
 .filter-btn.active{background:#e3f0ff;border-color:#90caf9;color:#1565c0}
-.level-card{border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:10px;border-left-width:5px;background:#fff}
-.level-card-header{display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap}
-.level-card-body{font-size:13px;color:#444;line-height:1.7}
 .ahp-note{background:#f3e5f5;border-radius:7px;padding:7px 11px;font-size:11px;color:#6a1b9a;margin-bottom:10px;border:1px solid #ce93d8;line-height:1.6}
 .tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;margin-left:4px}
 .tag-user{background:#e8f5e9;color:#2e7d32}
 .tag-builtin{background:#e3f2fd;color:#1565c0}
 .empty-state{text-align:center;padding:2rem;color:#aaa;font-size:13px}
 .coord-note{font-size:11px;color:#888;margin-top:2px}
+.level-card{border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-bottom:10px;border-left-width:5px;background:#fff}
+.level-card-header{display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap}
+.level-card-body{font-size:13px;color:#444;line-height:1.7}
 .et-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:10px 0}
 .et-card{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:9px;text-align:center}
 .et-card .ev{font-size:20px;font-weight:700}
@@ -88,84 +108,38 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
 .monthly-table{width:100%;border-collapse:collapse;font-size:12px}
 .monthly-table th{background:#f0f4ff;padding:6px 8px;text-align:center;font-size:11px;font-weight:600;color:#444}
 .monthly-table td{padding:5px 8px;text-align:center;border-bottom:1px solid #eee}
-.monthly-table tr:hover td{background:#f8f9ff}
-.export-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:10px;padding:1rem;margin-top:10px}
-.export-panel h3{font-size:13px;font-weight:600;color:#1565c0;margin-bottom:10px}
-.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.export-option{border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fff}
-.export-option h4{font-size:12px;font-weight:600;margin-bottom:3px}
-.export-option p{font-size:11px;color:#666;margin-bottom:8px;line-height:1.5}
-@media(max-width:600px){.calc-grid{grid-template-columns:1fr}.export-grid{grid-template-columns:1fr}}
-
-/* ══ AUTH SCREEN ══ */
-#authScreen{position:fixed;inset:0;background:linear-gradient(135deg,#1565c0 0%,#0d47a1 100%);z-index:9999;display:flex;align-items:center;justify-content:center}
-.auth-box{background:#fff;border-radius:16px;padding:2rem 2.2rem;width:380px;max-width:95vw;box-shadow:0 12px 50px rgba(0,0,0,.25)}
-.auth-logo{text-align:center;margin-bottom:1.2rem}
-.auth-logo h1{font-size:20px;font-weight:700;color:#1565c0;margin-top:6px}
-.auth-logo p{font-size:11px;color:#888;margin-top:3px;line-height:1.5}
-.auth-tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:1.2rem}
-.auth-tab{flex:1;text-align:center;padding:8px;font-size:13px;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
-.auth-tab.active{color:#1565c0;border-bottom-color:#1565c0}
-.auth-form{}
-.auth-field{margin-bottom:10px}
-.auth-field label{display:block;font-size:12px;color:#555;font-weight:500;margin-bottom:3px}
-.auth-field input{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;color:#222}
-.auth-field input:focus{outline:none;border-color:#1565c0}
-.auth-btn{width:100%;padding:10px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .2s}
-.auth-btn:hover{background:#0d47a1}
-.auth-error{color:#c62828;font-size:11px;text-align:center;margin-top:5px;min-height:16px}
-.auth-success{color:#2e7d32;font-size:11px;text-align:center;margin-top:5px;min-height:16px;font-weight:600}
-/* ══ CLOUD CHIP ══ */
-.cloud-chip{padding:2px 10px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.5);color:#fff;margin-left:4px}
-.cloud-chip.synced{background:rgba(46,204,113,.25);border-color:#2ecc71}
-.cloud-chip.syncing{background:rgba(255,165,0,.2);border-color:orange;animation:pulse .8s infinite alternate}
-.cloud-chip.nosync{background:rgba(180,180,180,.2);border-color:#ccc}
-.cloud-chip.error{background:rgba(231,76,60,.2);border-color:#e74c3c}
-@keyframes pulse{from{opacity:.7}to{opacity:1}}
-/* ══ USER CHIP ══ */
-#userChip{display:none;align-items:center;gap:5px;padding:3px 10px 3px 6px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.15);cursor:pointer}
-#userChip:hover{background:rgba(255,255,255,.25)}
-#userChip .avatar{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
-/* ══ CLOUD PUSH BTN ══ */
-#cloudPushBtn{display:none;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.12);cursor:pointer;margin-left:2px;transition:all .2s}
-#cloudPushBtn:hover{background:rgba(255,255,255,.25)}
-/* ══ TOAST NOTIFICATIONS ══ */
-#toastContainer{position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transform:translateX(30px);transition:all .3s;pointer-events:none;max-width:280px;line-height:1.4}
-.toast.show{opacity:1;transform:translateX(0)}
-.toast.t-success{background:#2e7d32}
-.toast.t-info{background:#1565c0}
-.toast.t-warn{background:#e65100}
-.toast.t-error{background:#c62828}
+.admin-badge{background:#1a237e;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:15px;color:#1565c0;font-weight:600}
+@media(max-width:600px){.calc-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
+<div id="loadingOverlay" class="loading-overlay">⏳ Loading SISI Registry...</div>
+
 <!-- AUTH SCREEN -->
-<div id="authScreen">
+<div id="authScreen" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">
       <div style="font-size:40px">🌾</div>
       <h1>SISI Registry</h1>
-      <p>Smart Irrigation Suitability Index<br>WMRI Field Study 2025–2026</p>
+      <p>Smart Irrigation Suitability Index<br>WMRI Field Study 2024–2026</p>
     </div>
     <div class="auth-tabs">
       <div class="auth-tab active" onclick="showAuthTab('login')">Sign In</div>
       <div class="auth-tab" onclick="showAuthTab('register')">Register</div>
     </div>
-    <!-- LOGIN -->
     <div id="loginForm" class="auth-form">
       <div class="auth-field"><label>Email</label><input type="email" id="loginEmail" placeholder="researcher@institution.edu"/></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="loginPass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="loginPass" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div id="loginError" class="auth-error"></div>
       <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign In →</button>
     </div>
-    <!-- REGISTER -->
     <div id="registerForm" class="auth-form" style="display:none">
       <div class="auth-field"><label>Full Name</label><input type="text" id="regName" placeholder="Dr. Mohamed Embaby"/></div>
       <div class="auth-field"><label>Institution</label><input type="text" id="regInstitution" placeholder="WMRI / NWRC / MWRI..."/></div>
       <div class="auth-field"><label>Email</label><input type="email" id="regEmail" placeholder="researcher@institution.edu"/></div>
-      <div class="auth-field"><label>Password (min 8 chars)</label><input type="password" id="regPass" placeholder="Strong password"/></div>
+      <div class="auth-field"><label>Password (min 8 chars)</label><input type="password" id="regPass"/></div>
       <div id="registerError" class="auth-error"></div>
       <div id="registerSuccess" class="auth-success"></div>
       <button class="auth-btn" onclick="doRegister()" id="registerBtn">Create Account →</button>
@@ -174,713 +148,666 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222}
   </div>
 </div>
 
-<div id="app">
-
-<div class="header">
-  <h1>🌾 SISI — Smart Irrigation Suitability Index | Global GIS Registry</h1>
-  <p>Farm-level assessment · AHP-WSM Multi-Criteria · WMRI Field Study 2025–2026 · Persistent Farm Registry + Map Export</p>
-  <div class="header-row2">
-    <span id="saveChip" class="save-chip saved">✓ Auto-saved</span>
-    <span id="cloudChip" class="cloud-chip nosync">☁ Cloud: —</span>
-    <button id="cloudPushBtn" onclick="manualCloudPush()" title="Push all farms to cloud now">☁ Sync Now</button>
-    <span id="userChip" onclick="confirmSignOut()" title="Click to sign out">
-      <span class="avatar" id="userAvatar">?</span>
-      <span id="userLabel">—</span>
-    </span>
-    <span style="font-size:10px;opacity:.75">All entries saved permanently · persist after closing</span>
-  </div>
-</div>
-<!-- TOAST CONTAINER -->
-<div id="toastContainer"></div>
-
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('map')">🗺️ Map</div>
-  <div class="tab" onclick="switchTab('farms')">📊 Pilot Sites</div>
-  <div class="tab" onclick="switchTab('calc')">🧮 Calculator + Registry</div>
-  <div class="tab" onclick="switchTab('et')">💧 ET₀ / ETc / FAO</div>
-  <div class="tab" onclick="switchTab('compare')">📈 Comparison</div>
-  <div class="tab" onclick="switchTab('levels')">📋 Maturity Levels</div>
-</div>
-
-<!-- MAP TAB -->
-<div id="tab-map" class="content active">
-  <div id="map"></div>
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>L1 Basic Awareness (1.00–2.00)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e6228b"></div>L2 Semi-Auto Drip (2.01–2.80)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#f31212"></div>L3 Fully Automated (2.81–3.60)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div>L4 Climate-Integrated (3.61–4.40)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div>L5 Precision + UAV (4.41–5.00)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#1565c0;border:2px dashed #90caf9"></div>User-added farm</div>
-  </div>
-  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn btn-success" onclick="switchTab('calc')">➕ Add Farm to Map</button>
-    <button class="btn btn-info" onclick="exportCSV()">📊 Export All to CSV/Excel</button>
-    <button class="btn btn-warning" onclick="clearUserFarms()">🗑️ Clear My Farms</button>
-  </div>
-  <div class="export-panel">
-    <h3>🗺️ Map Export Options</h3>
-    <div class="export-grid">
-      <div class="export-option">
-        <h4>📁 GeoJSON — QGIS / ArcGIS / Mapbox</h4>
-        <p>Standard GIS format. Open directly in QGIS, ArcGIS, Google Maps API, Mapbox, or any GIS software.</p>
-        <button class="btn btn-primary" onclick="exportGeoJSON()">⬇ Download GeoJSON</button>
-      </div>
-      <div class="export-option">
-        <h4>🌍 KML / KMZ — Google Earth</h4>
-        <p>Open in Google Earth Pro or Google Earth web. Shows all farm markers with full details and color coding.</p>
-        <button class="btn btn-success" onclick="exportKML()">⬇ Download KML (Google Earth)</button>
-      </div>
-      <div class="export-option">
-        <h4>🗺️ Shapefile Info</h4>
-        <p>For Shapefile format: import GeoJSON into QGIS → right-click layer → Export → Save as Shapefile (.shp)</p>
-        <button class="btn btn-purple" onclick="exportGeoJSON()">⬇ GeoJSON → Convert to SHP</button>
-      </div>
-      <div class="export-option">
-        <h4>🖼️ Map Screenshot (PNG/JPG)</h4>
-        <p>Download the current map view as an image for reports and presentations.</p>
-        <button class="btn btn-teal" onclick="exportMapImage()">⬇ Download Map Image</button>
-      </div>
+<!-- MAIN APP -->
+<div id="mainApp">
+  <div class="header">
+    <div class="header-left">
+      <h1>🌾 SISI — Smart Irrigation Suitability Index</h1>
+      <p>Farm-level assessment · AHP-WSM · WMRI 2024–2026 · Secure Multi-User Registry</p>
     </div>
-    <div class="export-option" style="background:#e8f4fd;border-color:#90caf9">
-      <h4 style="color:#1565c0">📋 CSV with Coordinates — for Google My Maps</h4>
-      <p style="color:#444">Export CSV → Go to <b>Google My Maps</b> → Create New Map → Import → Select CSV. All farms will appear as pins on Google Maps with full SISI data.</p>
-      <button class="btn btn-info" onclick="exportCSV()">⬇ Export CSV for Google My Maps</button>
-    </div>
-  </div>
-  <p style="font-size:11px;color:#888;margin-top:7px">All user-added farms are saved to your browser — persist after closing. Click any marker for details.</p>
-</div>
-
-<!-- FARMS TAB -->
-<div id="tab-farms" class="content">
-  <div id="farmsTitle" style="font-size:13px;font-weight:600;margin-bottom:10px;color:#444"></div>
-  <div class="farm-grid" id="farmGrid"></div>
-  <div id="farmDetail"></div>
-</div>
-
-<!-- CALCULATOR + REGISTRY TAB -->
-<div id="tab-calc" class="content">
-  <div class="calc-section">
-    <h3>📍 Farm Location & Identity</h3>
-    <div class="calc-grid">
-      <div class="form-group"><label>Farm Name *</label><input type="text" id="inp_name" placeholder="e.g. Ahmed Hassan Farm" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Region / Area</label><input type="text" id="inp_region" placeholder="e.g. Nubaria West" oninput="triggerAutoSave()"/></div>
-      <div class="form-group">
-        <label>Country</label>
-        <select id="inp_country" onchange="updateGovList();triggerAutoSave()">
-          <option value="EG">🇪🇬 Egypt</option>
-          <option value="MA">🇲🇦 Morocco</option>
-          <option value="TN">🇹🇳 Tunisia</option>
-          <option value="DZ">🇩🇿 Algeria</option>
-          <option value="SA">🇸🇦 Saudi Arabia</option>
-          <option value="JO">🇯🇴 Jordan</option>
-          <option value="IQ">🇮🇶 Iraq</option>
-          <option value="SD">🇸🇩 Sudan</option>
-          <option value="ET">🇪🇹 Ethiopia</option>
-          <option value="IN">🇮🇳 India</option>
-          <option value="TR">🇹🇷 Türkiye</option>
-          <option value="OTHER">🌍 Other</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Governorate / Province *</label><select id="inp_gov" onchange="triggerAutoSave()"><option value="">— Select —</option></select></div>
-      <div class="form-group"><label>Farm Area</label><input type="number" id="inp_area" placeholder="e.g. 10" min="0.1" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Area Unit</label><select id="inp_areaunit" onchange="triggerAutoSave()"><option value="feddans">Feddans</option><option value="ha">Hectares</option><option value="acres">Acres</option></select></div>
-      <div class="form-group">
-        <label>Latitude *</label>
-        <input type="number" id="inp_lat" placeholder="e.g. 30.2627" step="0.0001" oninput="triggerAutoSave()"/>
-        <div class="coord-note">-90° to +90°</div>
-      </div>
-      <div class="form-group">
-        <label>Longitude *</label>
-        <input type="number" id="inp_lng" placeholder="e.g. 31.1817" step="0.0001" oninput="triggerAutoSave()"/>
-        <div class="coord-note">-180° to +180°</div>
-      </div>
-      <div class="form-group"><label>Main Crop</label><input type="text" id="inp_crop" placeholder="e.g. Citrus, Tomato, Wheat" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Notes (optional)</label><input type="text" id="inp_notes" placeholder="Any relevant details" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Water Source</label><input type="text" id="inp_water" placeholder="e.g. Nile canal, groundwater" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Irrigation Method</label><input type="text" id="inp_irrigation" placeholder="e.g. drip, surface, sprinkler" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Energy Supply</label><input type="text" id="inp_energy" placeholder="e.g. grid, solar, diesel" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Soil Description</label><input type="text" id="inp_soil" placeholder="e.g. sandy loam, ECe 0.8 dS/m" oninput="triggerAutoSave()"/></div>
-      <div class="form-group"><label>Water Quality</label><input type="text" id="inp_waterq" placeholder="e.g. EC 0.6 dS/m, TDS 400 mg/L" oninput="triggerAutoSave()"/></div>
+    <div class="header-right">
+      <span id="userChip" class="user-chip"></span>
+      <span id="saveChip" class="save-chip saved">✓ Saved</span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
 
-  <div class="calc-section">
-    <h3>📊 SISI Criteria Scoring</h3>
-    <div class="ahp-note">
-      <b>Formula:</b> SISI = (0.30×C₁) + (0.20×C₂) + (0.15×C₃) + (0.15×C₄) + (0.20×C₅) &nbsp;·&nbsp; Range: 1.00–5.00<br>
-      <b>AHP Weights:</b> CR = −0.000446 &lt; 0.10 ✓ &nbsp;·&nbsp; λmax = 4.998 &nbsp;·&nbsp; Expert panel n=7 (WMRI, NWRC, ARC, Banha Univ.)
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('map')">🗺️ Map</div>
+    <div class="tab" onclick="switchTab('farms')">📊 Farms</div>
+    <div class="tab" onclick="switchTab('calc')">🧮 Calculator</div>
+    <div class="tab" onclick="switchTab('et')">💧 ET₀/ETc</div>
+    <div class="tab" onclick="switchTab('compare')">📈 Compare</div>
+    <div class="tab" onclick="switchTab('levels')">📋 Levels</div>
+    <div class="tab" id="adminTab" onclick="switchTab('admin')" style="display:none">🔐 Admin</div>
+  </div>
+
+  <!-- MAP -->
+  <div id="tab-map" class="content active">
+    <div id="map"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>L1 (1.00–2.00)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e67e22"></div>L2 (2.01–2.80)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div>L3 (2.81–3.60)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div>L4 (3.61–4.40)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div>L5 (4.41–5.00)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1565c0;border:2px dashed #90caf9"></div>My farms</div>
     </div>
-    <div class="calc-grid">
-      <div class="form-group">
-        <label>C₁ — Irrigation Type &amp; Infrastructure (0.30)</label>
-        <select id="c1" onchange="calcSISI();triggerAutoSave()">
-          <option value="1">1.0 — Surface only; no pressurized system</option>
-          <option value="1.5">1.5 — Surface with minor improvements</option>
-          <option value="2">2.0 — &lt;30% drip; outdated; low DU</option>
-          <option value="2.5" selected>2.5 — Partial drip; basic infrastructure</option>
-          <option value="3">3.0 — 30–70% drip; partial automation</option>
-          <option value="3.5">3.5 — Wide drip; multi-zone control</option>
-          <option value="4">4.0 — &gt;70% drip; UC &gt;85%</option>
-          <option value="4.5">4.5 — Full drip + partial SCADA</option>
-          <option value="5">5.0 — Full drip + SCADA + sensors integrated</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>C₂ — Infrastructure &amp; Energy Supply (0.20)</label>
-        <select id="c2" onchange="calcSISI();triggerAutoSave()">
-          <option value="1">1.0 — Diesel only; no reliable power</option>
-          <option value="1.4">1.4 — Single-phase; 4–6 hr daily outage</option>
-          <option value="2">2.0 — Unreliable grid; no solar</option>
-          <option value="2.5">2.5 — Grid/partial solar; weak GSM</option>
-          <option value="3" selected>3.0 — Grid or solar; moderate outages; good GSM</option>
-          <option value="3.5">3.5 — Stable grid + solar backup; 4G</option>
-          <option value="4">4.0 — Excellent solar (5.8 kWh/m²/day); DC-ready</option>
-          <option value="4.5">4.5 — HV substation + fiber LAN</option>
-          <option value="5">5.0 — Dual supply + solar + UPS + fiber/4G LTE</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>C₃ — Soil &amp; Environmental Conditions (0.15)</label>
-        <select id="c3" onchange="calcSISI();triggerAutoSave()">
-          <option value="1">1.0 — Heavy clay or ECe &gt;4 dS/m; poor drainage</option>
-          <option value="2">2.0 — Clay loam; ECe 2–4 dS/m; limited drainage</option>
-          <option value="2.5">2.5 — Moderate soil; drainage challenges</option>
-          <option value="3">3.0 — Sandy loam; ECe 0.8–2 dS/m; good drainage</option>
-          <option value="3.5" selected>3.5 — Good drainage; ECe acceptable</option>
-          <option value="4">4.0 — Sandy; ECe &lt;0.8 dS/m; excellent drainage</option>
-          <option value="5">5.0 — Optimal sandy loam; ECe &lt;0.5; fully instrumented</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>C₄ — Crop Type &amp; Economic Sensitivity (0.15)</label>
-        <select id="c4" onchange="calcSISI();triggerAutoSave()">
-          <option value="1">1.0 — Subsistence crops; &lt;EGP 15K/feddan</option>
-          <option value="2">2.0 — Strategic cereals; moderate margin</option>
-          <option value="2.5">2.5 — Mixed vegetables/cereals; market access</option>
-          <option value="3" selected>3.0 — Medium-high value; marketing linkage</option>
-          <option value="3.5">3.5 — Onion/garlic; export potential</option>
-          <option value="4">4.0 — High-value horticulture; export</option>
-          <option value="4.5">4.5 — Certified export citrus/grapes; GlobalG.A.P.</option>
-          <option value="5">5.0 — Premium export + contract farming</option>
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label>C₅ — Socioeconomic Readiness (0.20)</label>
-        <select id="c5" onchange="calcSISI();triggerAutoSave()">
-          <option value="1">1.0 — Illiterate; no smartphone; no bank; rented land; no support</option>
-          <option value="1.5">1.5 — Primary education; basic phone; no credit</option>
-          <option value="2">2.0 — Primary education; basic phone; limited credit</option>
-          <option value="2.5">2.5 — Secondary; smartphone; partial land ownership</option>
-          <option value="3">3.0 — Secondary; smartphone; some credit history</option>
-          <option value="3.5" selected>3.5 — Cooperative member; partial bank credit; extension contact</option>
-          <option value="3.8">3.8 — Secondary+; cooperative; prior tech adoption</option>
-          <option value="4">4.0 — Higher education; smart devices; bank credit; owned land</option>
-          <option value="4.5">4.5 — Advanced tech experience; cooperative leadership</option>
-          <option value="5">5.0 — Corporate mgmt; PhD agronomist; IT team; ISO 9001</option>
-        </select>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="addFarmToRegistry()">➕ Save Farm to Registry &amp; Map</button>
-      <button class="btn btn-success" onclick="exportCSV()">📊 Export All (CSV/Excel)</button>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="switchTab('calc')">➕ Add Farm</button>
+      <button class="btn btn-info" onclick="exportCSV()">📊 Export CSV</button>
       <button class="btn btn-info" onclick="exportGeoJSON()">🗺️ Export GeoJSON</button>
-      <button class="btn btn-teal" onclick="exportKML()">🌍 Export KML (Google Earth)</button>
+      <button class="btn btn-info" onclick="exportKML()">🌍 Export KML</button>
     </div>
+    <p style="font-size:11px;color:#888;margin-top:7px">Your farms are saved to the cloud — accessible from any device when signed in.</p>
   </div>
 
-  <div id="calcResult" class="score-box" style="display:none"></div>
-
-  <div class="calc-section" style="margin-top:1rem">
-    <h3>🗂️ Farm Registry — All Saved Farms</h3>
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="registrySearch" placeholder="Search by name or governorate..." oninput="renderRegistry()" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid #ddd;border-radius:7px;font-size:12px"/>
-      <span id="regCount" style="font-size:11px;color:#888"></span>
-      <button class="btn btn-warning" onclick="clearUserFarms()">🗑️ Clear User Farms</button>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="registry-table" id="registryTable">
-        <thead><tr>
-          <th>#</th><th>Name</th><th>Country/Gov</th><th>Region</th>
-          <th>Crop</th><th>Area</th><th>Lat</th><th>Lng</th>
-          <th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th>
-          <th>SISI</th><th>Level</th><th>Action</th>
-        </tr></thead>
-        <tbody id="registryBody"></tbody>
-      </table>
-    </div>
-    <div id="registryEmpty" class="empty-state" style="display:none">No farms in registry yet. Add a farm above.</div>
+  <!-- FARMS -->
+  <div id="tab-farms" class="content">
+    <div id="farmsTitle" style="font-size:13px;font-weight:600;margin-bottom:10px;color:#444"></div>
+    <div class="farm-grid" id="farmGrid"></div>
+    <div id="farmDetail"></div>
   </div>
-</div>
 
-<!-- ET TAB -->
-<div id="tab-et" class="content">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+  <!-- CALCULATOR -->
+  <div id="tab-calc" class="content">
     <div class="calc-section">
-      <h3>🌍 Location &amp; Climate</h3>
+      <h3>📍 Farm Location & Identity</h3>
       <div class="calc-grid">
-        <div class="form-group"><label>Latitude</label><input type="number" id="et_lat" value="30.26" step="0.01" oninput="calcET()"/></div>
-        <div class="form-group"><label>Elevation (m)</label><input type="number" id="et_elev" value="20" oninput="calcET()"/></div>
+        <div class="form-group"><label>Farm Name *</label><input type="text" id="inp_name" placeholder="e.g. Ahmed Hassan Farm"/></div>
+        <div class="form-group"><label>Region / Area</label><input type="text" id="inp_region" placeholder="e.g. Nubaria West"/></div>
         <div class="form-group">
-          <label>Climate Zone</label>
-          <select id="et_zone" onchange="loadClimatePreset();calcET()">
-            <option value="nile_delta">Nile Delta / North Egypt</option>
-            <option value="upper_egypt">Upper Egypt / Nile Valley</option>
-            <option value="new_lands">New Lands / Desert</option>
-            <option value="sinai">Sinai Peninsula</option>
-            <option value="maghreb">Maghreb (Morocco/Tunisia/Algeria)</option>
-            <option value="levant">Levant (Jordan/Lebanon/Syria)</option>
-            <option value="arabian">Arabian Peninsula</option>
-            <option value="sahel">Sub-Saharan / Sahel</option>
-            <option value="south_asia">South Asia (India/Pakistan)</option>
-            <option value="mediterranean">Mediterranean / Türkiye</option>
+          <label>Country</label>
+          <select id="inp_country" onchange="updateGovList()">
+            <option value="EG">🇪🇬 Egypt</option><option value="MA">🇲🇦 Morocco</option>
+            <option value="TN">🇹🇳 Tunisia</option><option value="DZ">🇩🇿 Algeria</option>
+            <option value="SA">🇸🇦 Saudi Arabia</option><option value="JO">🇯🇴 Jordan</option>
+            <option value="IQ">🇮🇶 Iraq</option><option value="SD">🇸🇩 Sudan</option>
+            <option value="ET">🇪🇹 Ethiopia</option><option value="IN">🇮🇳 India</option>
+            <option value="TR">🇹🇷 Türkiye</option><option value="OTHER">🌍 Other</option>
           </select>
         </div>
-        <div class="form-group"><label>Mean Temp (°C)</label><input type="number" id="et_tmean" value="25" step="0.1" oninput="calcET()"/></div>
-        <div class="form-group"><label>Wind Speed (m/s)</label><input type="number" id="et_wind" value="2.0" step="0.1" oninput="calcET()"/></div>
-        <div class="form-group"><label>Humidity (%)</label><input type="number" id="et_rh" value="55" oninput="calcET()"/></div>
-        <div class="form-group"><label>Sunshine Hr/day</label><input type="number" id="et_sun" value="8.5" step="0.1" oninput="calcET()"/></div>
+        <div class="form-group"><label>Governorate / Province *</label><select id="inp_gov"><option value="">— Select —</option></select></div>
+        <div class="form-group"><label>Farm Area</label><input type="number" id="inp_area" placeholder="e.g. 10" min="0.1"/></div>
+        <div class="form-group"><label>Area Unit</label><select id="inp_areaunit"><option value="feddans">Feddans</option><option value="ha">Hectares</option><option value="acres">Acres</option></select></div>
+        <div class="form-group"><label>Latitude *</label><input type="number" id="inp_lat" placeholder="e.g. 30.2627" step="0.0001"/><div class="coord-note">-90° to +90°</div></div>
+        <div class="form-group"><label>Longitude *</label><input type="number" id="inp_lng" placeholder="e.g. 31.1817" step="0.0001"/><div class="coord-note">-180° to +180°</div></div>
+        <div class="form-group"><label>Main Crop</label><input type="text" id="inp_crop" placeholder="e.g. Citrus, Tomato, Wheat"/></div>
+        <div class="form-group"><label>Water Source</label><input type="text" id="inp_water" placeholder="e.g. Nile canal, groundwater"/></div>
+        <div class="form-group"><label>Irrigation Method</label><input type="text" id="inp_irrigation" placeholder="e.g. drip, surface, sprinkler"/></div>
+        <div class="form-group"><label>Energy Supply</label><input type="text" id="inp_energy" placeholder="e.g. grid, solar, diesel"/></div>
+        <div class="form-group"><label>Soil Description</label><input type="text" id="inp_soil" placeholder="e.g. sandy loam, ECe 0.8 dS/m"/></div>
+        <div class="form-group"><label>Water Quality</label><input type="text" id="inp_waterq" placeholder="e.g. EC 0.6 dS/m, TDS 400 mg/L"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Notes / Key Challenge</label><input type="text" id="inp_notes" placeholder="Any relevant details"/></div>
       </div>
     </div>
     <div class="calc-section">
-      <h3>🌱 Crop &amp; Kc (FAO-56)</h3>
+      <h3>📊 SISI Criteria Scoring</h3>
+      <div class="ahp-note">
+        <b>Formula:</b> SISI = (0.30×C₁) + (0.20×C₂) + (0.15×C₃) + (0.15×C₄) + (0.20×C₅) · Range: 1.00–5.00<br>
+        <b>AHP Weights:</b> CR = −0.000446 &lt; 0.10 ✓ · λmax = 4.998 · Expert panel n=7 (WMRI, NWRC, MWRI)
+      </div>
       <div class="calc-grid">
         <div class="form-group">
-          <label>Crop Type</label>
-          <select id="et_crop" onchange="loadCropKc();calcET()">
-            <option value="wheat">Wheat (Winter)</option><option value="maize">Maize / Corn</option>
-            <option value="rice">Rice</option><option value="cotton">Cotton</option>
-            <option value="sugarcane">Sugarcane</option><option value="tomato">Tomato</option>
-            <option value="potato">Potato</option><option value="onion">Onion</option>
-            <option value="garlic">Garlic</option><option value="citrus">Citrus</option>
-            <option value="grapes">Grapes</option><option value="olive">Olive</option>
-            <option value="watermelon">Watermelon</option><option value="cucumber">Cucumber</option>
-            <option value="clover">Berseem Clover</option><option value="alfalfa">Alfalfa</option>
-            <option value="sunflower">Sunflower</option><option value="soybean">Soybean</option>
+          <label>C₁ — Irrigation Type & Infrastructure (0.30)</label>
+          <select id="c1" onchange="calcSISI()">
+            <option value="1">1.0 — Surface only; no pressurized system</option>
+            <option value="1.5">1.5 — Surface with minor improvements</option>
+            <option value="2">2.0 — &lt;30% drip; outdated; low DU</option>
+            <option value="2.5" selected>2.5 — Partial drip; basic infrastructure</option>
+            <option value="3">3.0 — 30–70% drip; partial automation</option>
+            <option value="3.5">3.5 — Wide drip; multi-zone control</option>
+            <option value="4">4.0 — &gt;70% drip; UC &gt;85%</option>
+            <option value="4.5">4.5 — Full drip + partial SCADA</option>
+            <option value="5">5.0 — Full drip + SCADA + sensors integrated</option>
           </select>
         </div>
-        <div class="form-group"><label>Area (ha)</label><input type="number" id="et_area" value="5" step="0.1" oninput="calcET()"/></div>
-        <div class="form-group"><label>Kc Initial</label><input type="number" id="kc_ini" value="0.30" step="0.01" oninput="calcET()"/></div>
-        <div class="form-group"><label>Kc Mid-Season</label><input type="number" id="kc_mid" value="1.15" step="0.01" oninput="calcET()"/></div>
-        <div class="form-group"><label>Kc End-Season</label><input type="number" id="kc_end" value="0.25" step="0.01" oninput="calcET()"/></div>
-        <div class="form-group"><label>Season Days</label><input type="number" id="et_days" value="120" oninput="calcET()"/></div>
-        <div class="form-group"><label>Irrig. Efficiency (%)</label><input type="number" id="et_eff" value="85" oninput="calcET()"/></div>
-        <div class="form-group"><label>Leaching Fraction</label><input type="number" id="et_lf" value="0.10" step="0.01" oninput="calcET()"/></div>
+        <div class="form-group">
+          <label>C₂ — Infrastructure & Energy Supply (0.20)</label>
+          <select id="c2" onchange="calcSISI()">
+            <option value="1">1.0 — Diesel only; no reliable power</option>
+            <option value="1.4">1.4 — Single-phase; 4–6 hr daily outage</option>
+            <option value="2">2.0 — Unreliable grid; no solar</option>
+            <option value="2.5">2.5 — Grid/partial solar; weak GSM</option>
+            <option value="3" selected>3.0 — Grid or solar; moderate outages; good GSM</option>
+            <option value="3.5">3.5 — Stable grid + solar backup; 4G</option>
+            <option value="4">4.0 — Excellent solar (5.8 kWh/m²/day); DC-ready</option>
+            <option value="4.5">4.5 — HV substation + fiber LAN</option>
+            <option value="5">5.0 — Dual supply + solar + UPS + fiber/4G LTE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>C₃ — Soil & Environmental Conditions (0.15)</label>
+          <select id="c3" onchange="calcSISI()">
+            <option value="1">1.0 — Heavy clay or ECe &gt;4 dS/m; poor drainage</option>
+            <option value="2">2.0 — Clay loam; ECe 2–4 dS/m; limited drainage</option>
+            <option value="2.5">2.5 — Moderate soil; drainage challenges</option>
+            <option value="3">3.0 — Sandy loam; ECe 0.8–2 dS/m; good drainage</option>
+            <option value="3.5" selected>3.5 — Good drainage; ECe acceptable</option>
+            <option value="4">4.0 — Sandy; ECe &lt;0.8 dS/m; excellent drainage</option>
+            <option value="5">5.0 — Optimal sandy loam; ECe &lt;0.5; fully instrumented</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>C₄ — Crop Type & Economic Sensitivity (0.15)</label>
+          <select id="c4" onchange="calcSISI()">
+            <option value="1">1.0 — Subsistence crops; &lt;EGP 15K/feddan</option>
+            <option value="2">2.0 — Strategic cereals; moderate margin</option>
+            <option value="2.5">2.5 — Mixed vegetables/cereals; market access</option>
+            <option value="3" selected>3.0 — Medium-high value; marketing linkage</option>
+            <option value="3.5">3.5 — Onion/garlic; export potential</option>
+            <option value="4">4.0 — High-value horticulture; export</option>
+            <option value="4.5">4.5 — Certified export citrus/grapes; GlobalG.A.P.</option>
+            <option value="5">5.0 — Premium export + contract farming</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>C₅ — Socioeconomic Readiness (0.20)</label>
+          <select id="c5" onchange="calcSISI()">
+            <option value="1">1.0 — Illiterate; no smartphone; no bank; rented land</option>
+            <option value="1.5">1.5 — Primary education; basic phone; no credit</option>
+            <option value="2">2.0 — Primary education; basic phone; limited credit</option>
+            <option value="2.5">2.5 — Secondary; smartphone; partial land ownership</option>
+            <option value="3">3.0 — Secondary; smartphone; some credit history</option>
+            <option value="3.5" selected>3.5 — Cooperative member; partial bank credit; extension contact</option>
+            <option value="3.8">3.8 — Secondary+; cooperative; prior tech adoption</option>
+            <option value="4">4.0 — Higher education; smart devices; bank credit; owned land</option>
+            <option value="4.5">4.5 — Advanced tech experience; cooperative leadership</option>
+            <option value="5">5.0 — Corporate mgmt; PhD agronomist; IT team; ISO 9001</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addFarm()" id="saveFarmBtn">➕ Save Farm to Cloud & Map</button>
+        <button class="btn btn-success" onclick="exportCSV()">📊 Export CSV</button>
+        <button class="btn btn-info" onclick="exportGeoJSON()">🗺️ GeoJSON</button>
+        <button class="btn btn-teal" onclick="exportKML()">🌍 KML</button>
       </div>
     </div>
+    <div id="calcResult" class="score-box" style="display:none"></div>
+    <div class="calc-section" style="margin-top:1rem">
+      <h3>🗂️ My Farm Registry</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="registrySearch" placeholder="Search farms..." oninput="renderRegistry()" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid #ddd;border-radius:7px;font-size:12px"/>
+        <span id="regCount" style="font-size:11px;color:#888"></span>
+        <button class="btn btn-warning" onclick="clearMyFarms()">🗑️ Clear My Farms</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="registry-table">
+          <thead><tr><th>#</th><th>Name</th><th>Gov</th><th>Crop</th><th>Area</th><th>Lat</th><th>Lng</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>SISI</th><th>Level</th><th>Action</th></tr></thead>
+          <tbody id="registryBody"></tbody>
+        </table>
+      </div>
+      <div id="registryEmpty" class="empty-state" style="display:none">No farms yet. Add your first farm above.</div>
+    </div>
   </div>
-  <div class="calc-section" id="etResults"><h3>📊 Results</h3><div id="etResultsInner"><i>Fill in the form above...</i></div></div>
-  <div class="calc-section" style="margin-top:1rem"><h3>📅 Monthly ET₀ Table</h3><div id="monthlyET"></div></div>
-  <div class="calc-section" style="margin-top:1rem"><h3>🔮 Irrigation Schedule Forecast</h3><div id="irrigSchedule"></div></div>
+
+  <!-- ET TAB -->
+  <div id="tab-et" class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="calc-section">
+        <h3>🌍 Location & Climate</h3>
+        <div class="calc-grid">
+          <div class="form-group"><label>Latitude</label><input type="number" id="et_lat" value="30.26" step="0.01" oninput="calcET()"/></div>
+          <div class="form-group"><label>Elevation (m)</label><input type="number" id="et_elev" value="20" oninput="calcET()"/></div>
+          <div class="form-group"><label>Climate Zone</label>
+            <select id="et_zone" onchange="loadClimatePreset();calcET()">
+              <option value="nile_delta">Nile Delta / North Egypt</option>
+              <option value="upper_egypt">Upper Egypt / Nile Valley</option>
+              <option value="new_lands">New Lands / Desert</option>
+              <option value="sinai">Sinai Peninsula</option>
+              <option value="maghreb">Maghreb</option>
+              <option value="levant">Levant</option>
+              <option value="arabian">Arabian Peninsula</option>
+              <option value="sahel">Sub-Saharan / Sahel</option>
+              <option value="south_asia">South Asia</option>
+              <option value="mediterranean">Mediterranean</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Mean Temp (°C)</label><input type="number" id="et_tmean" value="25" step="0.1" oninput="calcET()"/></div>
+          <div class="form-group"><label>Wind Speed (m/s)</label><input type="number" id="et_wind" value="2.0" step="0.1" oninput="calcET()"/></div>
+          <div class="form-group"><label>Humidity (%)</label><input type="number" id="et_rh" value="55" oninput="calcET()"/></div>
+          <div class="form-group"><label>Sunshine Hr/day</label><input type="number" id="et_sun" value="8.5" step="0.1" oninput="calcET()"/></div>
+        </div>
+      </div>
+      <div class="calc-section">
+        <h3>🌱 Crop & Kc (FAO-56)</h3>
+        <div class="calc-grid">
+          <div class="form-group"><label>Crop Type</label>
+            <select id="et_crop" onchange="loadCropKc();calcET()">
+              <option value="wheat">Wheat</option><option value="maize">Maize</option><option value="rice">Rice</option>
+              <option value="cotton">Cotton</option><option value="tomato">Tomato</option><option value="potato">Potato</option>
+              <option value="onion">Onion</option><option value="garlic">Garlic</option><option value="citrus">Citrus</option>
+              <option value="grapes">Grapes</option><option value="olive">Olive</option><option value="watermelon">Watermelon</option>
+              <option value="clover">Berseem Clover</option><option value="alfalfa">Alfalfa</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Area (ha)</label><input type="number" id="et_area" value="5" step="0.1" oninput="calcET()"/></div>
+          <div class="form-group"><label>Kc Initial</label><input type="number" id="kc_ini" value="0.30" step="0.01" oninput="calcET()"/></div>
+          <div class="form-group"><label>Kc Mid-Season</label><input type="number" id="kc_mid" value="1.15" step="0.01" oninput="calcET()"/></div>
+          <div class="form-group"><label>Kc End-Season</label><input type="number" id="kc_end" value="0.25" step="0.01" oninput="calcET()"/></div>
+          <div class="form-group"><label>Season Days</label><input type="number" id="et_days" value="120" oninput="calcET()"/></div>
+          <div class="form-group"><label>Irrig. Efficiency (%)</label><input type="number" id="et_eff" value="85" oninput="calcET()"/></div>
+          <div class="form-group"><label>Leaching Fraction</label><input type="number" id="et_lf" value="0.10" step="0.01" oninput="calcET()"/></div>
+        </div>
+      </div>
+    </div>
+    <div class="calc-section"><h3>📊 ET Results</h3><div id="etResultsInner"><i>Fill in the form above...</i></div></div>
+    <div class="calc-section" style="margin-top:1rem"><h3>📅 Monthly ET₀</h3><div id="monthlyET"></div></div>
+    <div class="calc-section" style="margin-top:1rem"><h3>🔮 Irrigation Schedule</h3><div id="irrigSchedule"></div></div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="tab-compare" class="content">
+    <div class="filter-row">
+      <div class="filter-btn active" onclick="filterCompare('all',this)">All</div>
+      <div class="filter-btn" onclick="filterCompare('L1',this)">L1</div>
+      <div class="filter-btn" onclick="filterCompare('L2',this)">L2</div>
+      <div class="filter-btn" onclick="filterCompare('L3',this)">L3</div>
+      <div class="filter-btn" onclick="filterCompare('L4',this)">L4</div>
+      <div class="filter-btn" onclick="filterCompare('L5',this)">L5</div>
+    </div>
+    <div id="compareChart"></div>
+  </div>
+
+  <!-- LEVELS -->
+  <div id="tab-levels" class="content">
+    <div style="margin-bottom:1rem">
+      <div style="font-size:14px;font-weight:600;margin-bottom:3px">Smart Irrigation Maturity Classification Matrix</div>
+      <p style="font-size:11px;color:#888">Based on WMRI (2026) · World Bank SARI · FAO-MASSCOTE · EU PAMM Horizon 2020 · Israel MARD Framework · ICID Global Survey</p>
+    </div>
+    <div class="level-card" style="border-left-color:#e74c3c"><div class="level-card-header"><span class="level-badge" style="background:#fde8e8;color:#e74c3c;font-size:14px;padding:4px 14px">L1</span><span style="font-size:15px;font-weight:600">Basic Smart Awareness</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 1.00–2.00</span></div><div class="level-card-body">Install 1–2 soil moisture sensors only.</div></div>
+    <div class="level-card" style="border-left-color:#e67e22"><div class="level-card-header"><span class="level-badge" style="background:#fef0e6;color:#e67e22;font-size:14px;padding:4px 14px">L2</span><span style="font-size:15px;font-weight:600">Semi-Automated Drip</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 2.01–2.80</span></div><div class="level-card-body">Install a basic drip irrigation system with controller.</div></div>
+    <div class="level-card" style="border-left-color:#f1c40f"><div class="level-card-header"><span class="level-badge" style="background:#fefce6;color:#c8a500;font-size:14px;padding:4px 14px">L3</span><span style="font-size:15px;font-weight:600">Fully Automated System</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 2.81–3.60</span></div><div class="level-card-body">Install an automated irrigation system with soil sensors and valves.</div></div>
+    <div class="level-card" style="border-left-color:#f39c12"><div class="level-card-header"><span class="level-badge" style="background:#fef3e0;color:#f39c12;font-size:14px;padding:4px 14px">L3+</span><span style="font-size:15px;font-weight:600">Fully Automated — Precision</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 2.81–3.60</span></div><div class="level-card-body">Install a solar-powered irrigation system with soil sensors.</div></div>
+    <div class="level-card" style="border-left-color:#2ecc71"><div class="level-card-header"><span class="level-badge" style="background:#e8f8f0;color:#2ecc71;font-size:14px;padding:4px 14px">L4</span><span style="font-size:15px;font-weight:600">Climate-Integrated</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 3.61–4.40</span></div><div class="level-card-body">Install a full SCADA irrigation system with weather station and sensors.</div></div>
+    <div class="level-card" style="border-left-color:#9b59b6"><div class="level-card-header"><span class="level-badge" style="background:#f3e8f8;color:#9b59b6;font-size:14px;padding:4px 14px">L5</span><span style="font-size:15px;font-weight:600">Precision + UAV</span><span style="font-size:13px;color:#888;font-family:monospace">SISI 4.41–5.00</span></div><div class="level-card-body">Install UAV (drone) and AI-based precision irrigation system.</div></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="tab-admin" class="content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+      <span class="admin-badge">ADMIN</span>
+      <span style="font-size:14px;font-weight:600">All Users & Farms — Full Registry View</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="adminLoadAll()">🔄 Refresh All Data</button>
+      <button class="btn btn-info" onclick="adminExportCSV()">📊 Export All Users CSV</button>
+    </div>
+    <div id="adminContent"><div class="empty-state">Click "Refresh All Data" to load.</div></div>
+  </div>
 </div>
 
-<!-- COMPARE TAB -->
-<div id="tab-compare" class="content">
-  <div class="filter-row">
-    <div class="filter-btn active" onclick="filterCompare('all',this)">All</div>
-    <div class="filter-btn" onclick="filterCompare('L1',this)">L1</div>
-    <div class="filter-btn" onclick="filterCompare('L2',this)">L2</div>
-    <div class="filter-btn" onclick="filterCompare('L3',this)">L3</div>
-    <div class="filter-btn" onclick="filterCompare('L4',this)">L4</div>
-    <div class="filter-btn" onclick="filterCompare('L5',this)">L5</div>
-  </div>
-  <div id="compareChart"></div>
-</div>
-
-<!-- LEVELS TAB — EXACT ORIGINAL DATA, FROZEN -->
-<div id="tab-levels" class="content">
-  <div style="margin-bottom:1rem">
-    <div style="font-size:14px;font-weight:600;margin-bottom:3px">Smart Irrigation Maturity Classification Matrix</div>
-    <p style="font-size:11px;color:#888">Based on WMRI (2026) · World Bank SARI · FAO-MASSCOTE · EU PAMM Horizon 2020 · Israel MARD Framework · ICID Global Survey</p>
-  </div>
-
-  <div class="level-card" style="border-left-color:#e74c3c">
-    <div class="level-card-header">
-      <span class="level-badge" style="background:#fde8e8;color:#e74c3c;font-size:14px;padding:4px 14px">L1</span>
-      <span style="font-size:15px;font-weight:600">Basic Smart Awareness</span>
-      <span style="font-size:13px;color:#888;font-family:monospace">SISI 1.00–2.00</span>
-    </div>
-    <div class="level-card-body">Install 1–2 soil moisture sensors only.</div>
-  </div>
-
-  <div class="level-card" style="border-left-color:#e62222">
-    <div class="level-card-header">
-      <span class="level-badge" style="background:#fef0e6;color:#e67e22;font-size:14px;padding:4px 14px">L2</span>
-      <span style="font-size:15px;font-weight:600">Semi-Automated Drip</span>
-      <span style="font-size:13px;color:#888;font-family:monospace">SISI 2.01–2.80</span>
-    </div>
-    <div class="level-card-body">Install a basic drip irrigation system with controller.</div>
-  </div>
-
-  <div class="level-card" style="border-left-color:#f1c40f">
-    <div class="level-card-header">
-      <span class="level-badge" style="background:#fefce6;color:#c8a500;font-size:14px;padding:4px 14px">L3</span>
-      <span style="font-size:15px;font-weight:600">Fully automated system</span>
-      <span style="font-size:13px;color:#888;font-family:monospace">SISI 2.81–3.60</span>
-    </div>
-    <div class="level-card-body">Install an automated irrigation system with soil sensors and valves.</div>
-  </div>
-
-  <div class="level-card" style="border-left-color:#2ecc71">
-    <div class="level-card-header">
-      <span class="level-badge" style="background:#e8f8f0;color:#2ecc71;font-size:14px;padding:4px 14px">L4</span>
-      <span style="font-size:15px;font-weight:600">Climate-Integrated</span>
-      <span style="font-size:13px;color:#888;font-family:monospace">SISI 3.61–4.40</span>
-    </div>
-    <div class="level-card-body">Install a full SCADA irrigation system with weather station and sensors.</div>
-  </div>
-
-  <div class="level-card" style="border-left-color:#9b59b6">
-    <div class="level-card-header">
-      <span class="level-badge" style="background:#f3e8f8;color:#9b59b6;font-size:14px;padding:4px 14px">L5</span>
-      <span style="font-size:15px;font-weight:600">Precision + UAV</span>
-      <span style="font-size:13px;color:#888;font-family:monospace">SISI 4.41–5.00</span>
-    </div>
-    <div class="level-card-body">Install UAV (drone) and AI-based precision irrigation system.</div>
-  </div>
-</div>
-
-</div><!-- end app -->
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ═══════ BUILT-IN PILOT FARMS ═══════
-const builtinFarms=[
-  {id:'qalyoubeya',name:'Qalyoubeya',nameEn:'El Hassan Mohamed Zaher Farm',gov:'Qalyoubeya Governorate — South Delta',country:'EG',region:'South Delta',crop:'Orange trees — Navel Valencia',lat:30.2627,lng:31.1817,area:8,areaUnit:'feddans',level:'L1',levelNum:1,levelName:'Basic Smart Awareness',sisi:1.78,color:'#e74c3c',scores:{c1:1.5,c2:1.4,c3:2.5,c4:2.5,c5:1.5},weighted:{c1:0.45,c2:0.28,c3:0.38,c4:0.38,c5:0.30},water:'80% groundwater + 20% Mesqa canal',irrigation:'Surface basin; bamboo channels',energy:'Single-phase 220V; 4–6 hr daily outage; no backup',soil:'Clay loam; BD=1.31–1.35; FC=34–43%; ECe=0.41–0.46 dS/m; pH=8.63–8.68',waterQ:'EC 1.1–2.1 dS/m; TDS 700–1360 mg/L; SAR 1.5',intervention:'Install 1–2 soil moisture sensors only',socio:{edu:'Primary 6 yr',phone:'No smartphone',credit:'No bank account',coop:'None',ext:'>3 yr since last visit'},builtin:true},
-  {id:'dakahlia',name:'Dakahlia',nameEn:'Ezz Eldeen Farm',gov:'Dakahlia Governorate — East Delta',country:'EG',region:'East Delta',crop:'Potato, cucumber, vegetables (drip); wheat, clover (flood)',lat:31.4522,lng:31.4481,area:7,areaUnit:'feddans',level:'L2',levelNum:2,levelName:'Semi-Automated Drip',sisi:2.78,color:'#e67e22',scores:{c1:2.5,c2:2.5,c3:3.0,c4:2.5,c5:3.5},weighted:{c1:0.75,c2:0.50,c3:0.45,c4:0.38,c5:0.70},water:'El Ramlah Canal surface water',irrigation:'Drip 3 fed + flood; diesel pump 5HP',energy:'Reliable 3-phase grid; <2 hr weekly outage; 4G',soil:'Clay loam/heavy clay; BD=1.54–1.64; FC=43–45%; ECe=0.34–0.48 dS/m; pH=7.78–7.87',waterQ:'EC 0.598–0.943 dS/m; TDS 940 mg/L; SAR 1.75 — C2S1',intervention:'Install a basic drip irrigation system with controller.',socio:{edu:'Secondary 9.8 yr',phone:'Smartphone; app use 81.5%',credit:'Some credit history',coop:'Cooperative member',ext:'Regular contact'},builtin:true},
-  {id:'alexandria',name:'Alexandria',nameEn:'Ahmed Farag Khalil Farm',gov:'West Nubaria, Alexandria Governorate',country:'EG',region:'West Nubaria',crop:'Watermelon (drip); wheat & clover (sprinkler)',lat:30.7175:lng:29.9707,area:11,areaUnit:'feddans',level:'L3',levelNum:3,levelName:'Fully automated system',sisi:3.35,color:'#f1c40f',scores:{c1:3.5,c2:3.0,c3:3.5,c4:3.0,c5:3.5},weighted:{c1:1.05,c2:0.60,c3:0.53,c4:0.45,c5:0.70},water:'Private canal (Branch El Gharbeya 2)',irrigation:'Drip (watermelon) + sprinkler (wheat/clover)',energy:'Grid available; reliability 34% only',soil:'Sandy loam; 54.72% coarse sand; FC=14.61%; ECe=0.34–0.38 dS/m; pH=7.8–7.95',waterQ:'EC 0.644–0.712 dS/m; TDS 450–500 mg/L; SAR 1.1–1.5 — C2S1',intervention:'Install an automated irrigation system with soil sensors and valves.',socio:{edu:'Low–moderate; 10% university',phone:'Smartphone 80%; apps 90%',credit:'No finance access',coop:'Moderate (30%)',ext:'Training 14%'},builtin:true},
-  {id:'sohag',name:'Sohag',nameEn:'Abu Bakr A.H. Mohamed Farm',gov:'Tema District, Sohag Governorate — Upper Egypt',country:'EG',region:'Tema, Upper Egypt',crop:'Onion (Nov–Apr) / Garlic (Feb–Jun) rotation',lat:26.825,lng:31.3531,area:10,areaUnit:'feddans',level:'L3',levelNum:3,levelName:'Fully automated system',sisi:3.44,color:'#f39c12',scores:{c1:3.0,c2:4.0,c3:3.5,c4:3.0,c5:3.8},weighted:{c1:0.90,c2:0.80,c3:0.53,c4:0.45,c5:0.76},water:'2 groundwater wells (Well 1 EC=1.47; Well 2 EC=2.18 dS/m) + drainage canal',irrigation:'Partial drip 4/10 fed (T-Tape DU=71%); surface furrow 6 fed',energy:'Unreliable single-phase grid; solar irradiance 5.8 kWh/m²/day',soil:'Sandy loam; FC=19.8%; ECe=0.04–1.11 dS/m rising; pH=7.5–9.3',waterQ:'Well 1: EC 1.47, SAR 1.75 (suitable); Well 2: EC 2.18, SAR 5.4 (restricted)',intervention:'Install a solar-powered irrigation system with soil sensors.',socio:{edu:'Secondary; cooperative member',phone:'Smartphone; app use 16.7%',credit:'Cooperative credit',coop:'Active; prior tech adoption',ext:'Peer influence 100%'},builtin:true},
-  {id:'beheira',name:'Beheira (L4)',nameEn:'El Maghraby Commercial Agricultural Co.',gov:'El Nobareya, Beheira Governorate — West Delta',country:'EG',region:'El Nobareya, West Delta',crop:'Vegetables 600 feddans',lat:30.7447,lng:30.1237,area:600,areaUnit:'feddans',level:'L4',levelNum:4,levelName:'Climate-Integrated',sisi:4.29,color:'#2ecc71',scores:{c1:4.5,c2:4.5,c3:4.0,c4:4.5,c5:3.8},weighted:{c1:1.35,c2:0.90,c3:0.60,c4:0.68,c5:0.76},water:'Licensed Nile canal + 12 deep wells (50–80 m)',irrigation:'Drip 4200 fed (70%); legacy SCADA 2800 fed; surface 1800 fed',energy:'HV substation 11kV/380V; 3×200kVA transformers; 500kW diesel standby; fiber LAN; 4G LTE',soil:'Sandy 80%+; ECe=0.35–0.38 dS/m; pH=7.8–7.95; 3 GW monitoring wells',waterQ:'TDS 825 mg/L; SAR 2.0; pH 7.6 — excellent for drip',intervention:'Install a full SCADA irrigation system with weather station and sensors.',socio:{edu:'PhD agronomist; corporate mgmt',phone:'Dedicated IT team; prior IoT',credit:'Full capital access',coop:'ISO 9001; EU export certification',ext:'In-house agronomists'},builtin:true},
-  {id:'beheira_l5',name:'Beheira (L5)',nameEn:'El Maghraby Farm — Precision Upgrade',gov:'El Nobareya, Beheira Governorate — West Delta',country:'EG',region:'El Nobareya, West Delta',crop:'Citrus 2200 · Olives 1400 · Grapes 800',lat:30.7647,lng:30.1437,area:2200,areaUnit:'feddans',level:'L5',levelNum:5,levelName:'Precision + UAV',sisi:4.50,color:'#9b59b6',scores:{c1:4.5,c2:5.0,c3:4.0,c4:5.0,c5:4.0},weighted:{c1:1.50,c2:0.80,c3:0.60,c4:0.75,c5:1.00},water:'Licensed Nile canal + deep wells',irrigation:'Full SCADA + UAV-assisted variable-rate irrigation zoning',energy:'HV substation + fiber optic + solar + 500kW diesel backup',soil:'Sandy soils 80%+ optimized for precision drip irrigation',waterQ:'High quality irrigation water suitable for GlobalG.A.P. export crops',intervention:'Install UAV (drone) and AI-based precision irrigation system.',socio:{edu:'PhD agronomist + corporate team',phone:'Full IT infrastructure + AI team',credit:'Full capital access',coop:'Export-certified enterprise; ISO 9001',ext:'In-house agronomy + AI data science team'},builtin:true}
-];
-
-const levelColors={L1:'#e74c3c',L2:'#e67e22',L3:'#f1c40f',L4:'#2ecc71',L5:'#9b59b6'};
-const levelFull={L1:'Level 1: Basic Smart Awareness',L2:'Level 2: Semi-Automated Drip',L3:'Level 3: Fully automated system',L4:'Level 4: Climate-Integrated',L5:'Level 5: Precision + UAV'};
-
-// ═══════ GOVERNORATES ═══════
-const govData={
-  EG:['Alexandria','Aswan','Asyut','Beheira','Beni Suef','Cairo','Dakahlia','Damietta','Faiyum','Gharbia','Giza','Ismailia','Kafr El Sheikh','Luxor','Matruh','Minya','Monufia','New Valley','North Sinai','Port Said','Qalyoubeya','Qena','Red Sea','Sharqia','Sohag','South Sinai','Suez'],
-  MA:['Tanger-Tetouan','Oriental','Fès-Meknès','Rabat-Salé','Béni Mellal','Casablanca','Marrakech-Safi','Drâa-Tafilalet','Souss-Massa','Guelmim'],
-  TN:['Ariana','Béja','Ben Arous','Bizerte','Gabès','Gafsa','Jendouba','Kairouan','Kasserine','Nabeul','Sfax','Sousse','Tunis','Zaghouan'],
-  DZ:['Alger','Oran','Constantine','Annaba','Blida','Béjaïa','Sétif','Sidi Bel Abbès','Biskra','Ouargla','Ghardaïa','Tlemcen','Tiaret','Msila'],
-  SA:['Riyadh','Mecca','Medina','Eastern Province','Asir','Tabuk','Hail','Jizan','Najran','Qassim'],
-  JO:['Amman','Irbid','Zarqa','Mafraq','Balqa','Karak','Aqaba'],
-  IQ:['Baghdad','Basra','Nineveh','Erbil','Kirkuk','Anbar','Diyala','Wasit'],
-  SD:['Khartoum','Gezira','Kassala','River Nile','Northern','North Darfur','White Nile','Blue Nile','Sennar'],
-  ET:['Addis Ababa','Oromia','Amhara','SNNPR','Tigray','Afar','Somali'],
-  IN:['Andhra Pradesh','Gujarat','Haryana','Karnataka','Maharashtra','Punjab','Rajasthan','Tamil Nadu','Uttar Pradesh'],
-  TR:['Adana','Ankara','Antalya','Bursa','Gaziantep','İzmir','Konya','Şanlıurfa'],
-  OTHER:['Province/District 1','Province/District 2','Province/District 3']
-};
-
-// ═══════ FAO MONTHLY ET₀ ═══════
-const monthlyET0={
-  nile_delta:   [2.1,2.6,3.4,4.5,5.8,6.9,7.2,6.8,5.6,4.2,2.9,2.0],
-  upper_egypt:  [2.3,3.1,4.4,5.9,7.5,8.8,8.9,8.3,6.8,5.1,3.2,2.2],
-  new_lands:    [2.0,2.7,3.9,5.6,7.4,8.9,9.1,8.6,6.9,4.9,2.9,1.9],
-  sinai:        [2.5,3.3,4.7,6.2,7.8,9.0,9.2,8.5,7.0,5.2,3.4,2.4],
-  maghreb:      [1.6,2.2,3.2,4.5,5.9,7.2,7.8,7.2,5.4,3.7,2.2,1.5],
-  levant:       [1.8,2.5,3.7,5.0,6.4,7.8,8.2,7.8,6.2,4.5,2.8,1.9],
-  arabian:      [3.0,3.8,5.2,7.0,9.0,10.8,11.2,10.5,8.5,6.3,4.2,3.0],
-  sahel:        [4.5,5.2,6.8,7.5,7.2,6.5,6.0,6.2,6.5,6.0,4.8,4.2],
-  south_asia:   [2.8,3.5,4.8,6.2,7.0,5.5,4.8,4.5,4.2,3.8,3.0,2.5],
-  mediterranean:[1.2,1.6,2.5,3.7,5.2,6.8,7.5,7.0,5.2,3.5,2.0,1.2]
-};
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-const cropKc={
-  wheat:{ini:0.30,mid:1.15,end:0.25,days:120},maize:{ini:0.30,mid:1.20,end:0.35,days:125},
-  rice:{ini:1.05,mid:1.20,end:0.75,days:130},cotton:{ini:0.45,mid:1.15,end:0.70,days:180},
-  sugarcane:{ini:0.40,mid:1.25,end:0.75,days:270},tomato:{ini:0.60,mid:1.15,end:0.70,days:115},
-  potato:{ini:0.50,mid:1.15,end:0.75,days:105},onion:{ini:0.70,mid:1.05,end:0.75,days:150},
-  garlic:{ini:0.70,mid:1.00,end:0.70,days:150},citrus:{ini:0.65,mid:0.70,end:0.65,days:365},
-  grapes:{ini:0.30,mid:0.85,end:0.45,days:180},olive:{ini:0.65,mid:0.70,end:0.70,days:365},
-  watermelon:{ini:0.40,mid:1.00,end:0.75,days:80},cucumber:{ini:0.60,mid:1.00,end:0.75,days:105},
-  clover:{ini:0.40,mid:0.90,end:0.85,days:60},alfalfa:{ini:0.40,mid:0.95,end:0.90,days:365},
-  sunflower:{ini:0.35,mid:1.10,end:0.35,days:130},soybean:{ini:0.40,mid:1.15,end:0.50,days:130}
-};
-
-// ═══════ SUPABASE CONFIG ═══════
+// ══════════════════════════════════════════════════════════
+// ⚙️  CONFIGURATION
+// ══════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://qdnvbrskeiumhamhiacs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_1xupPtHGPUr0KUAJRQ_i2A_yU1VJTvl';
 const ADMIN_EMAIL  = 'lubnaibrahim43@gmail.com';
-let _sb = null;
-function getSB(){
-  if(!_sb && window.supabase){
-    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-  return _sb;
+// ══════════════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let userFarms = [];   // farms loaded from Supabase for the current user
+let map = null;
+let mapInitialized = false;
+
+// ══ BUILT-IN PILOT FARMS (always present, never deleted) ══
+const builtinFarms = [
+  {id:'builtin_qalyoubeya',name:'Qalyoubeya',nameEn:'El Hassan Mohamed Zaher Farm',gov:'Qalyoubeya Governorate — South Delta',country:'EG',region:'South Delta',crop:'Orange trees — Navel Valencia',lat:30.2627,lng:31.1817,area:8,areaUnit:'feddans',level:'L1',levelNum:1,levelName:'Basic Smart Awareness',sisi:1.78,color:'#e74c3c',scores:{c1:1.5,c2:1.4,c3:2.5,c4:2.5,c5:1.5},weighted:{c1:0.45,c2:0.28,c3:0.38,c4:0.38,c5:0.30},water:'80% groundwater + 20% Mesqa canal',irrigation:'Surface basin; bamboo channels',energy:'Single-phase 220V; 4–6 hr daily outage; no backup',soil:'Clay loam; BD=1.31–1.35; FC=34–43%; ECe=0.41–0.46 dS/m; pH=8.63–8.68',waterQ:'EC 1.1–2.1 dS/m; TDS 700–1360 mg/L; SAR 1.5',intervention:'Install 1–2 soil moisture sensors only.',notes:'',socio:{edu:'Primary 6 yr',phone:'No smartphone',credit:'No bank account',coop:'None',ext:'>3 yr since last visit'},builtin:true},
+  {id:'builtin_dakahlia',name:'Dakahlia',nameEn:'Ezz Eldeen Farm',gov:'Dakahlia Governorate — East Delta',country:'EG',region:'East Delta',crop:'Potato, cucumber, vegetables (drip); wheat, clover (flood)',lat:31.4522,lng:31.4481,area:7,areaUnit:'feddans',level:'L2',levelNum:2,levelName:'Semi-Automated Drip',sisi:2.78,color:'#e67e22',scores:{c1:2.5,c2:2.5,c3:3.0,c4:2.5,c5:3.5},weighted:{c1:0.75,c2:0.50,c3:0.45,c4:0.38,c5:0.70},water:'El Ramlah Canal surface water',irrigation:'Drip 3 fed + flood; diesel pump 5HP',energy:'Reliable 3-phase grid; <2 hr weekly outage; 4G',soil:'Clay loam/heavy clay; BD=1.54–1.64; FC=43–45%; ECe=0.34–0.48 dS/m; pH=7.78–7.87',waterQ:'EC 0.598–0.943 dS/m; TDS 940 mg/L; SAR 1.75 — C2S1',intervention:'Install a basic drip irrigation system with controller.',notes:'',socio:{edu:'Secondary 9.8 yr',phone:'Smartphone; app use 81.5%',credit:'Some credit history',coop:'Cooperative member',ext:'Regular contact'},builtin:true},
+  {id:'builtin_alexandria',name:'Alexandria',nameEn:'Ahmed Farag Khalil Farm',gov:'West Nubaria, Alexandria Governorate',country:'EG',region:'West Nubaria',crop:'Watermelon (drip); wheat & clover (sprinkler)',lat:29.9707,lng:30.7175,area:11,areaUnit:'feddans',level:'L3',levelNum:3,levelName:'Fully automated system',sisi:3.35,color:'#f1c40f',scores:{c1:3.5,c2:3.0,c3:3.5,c4:3.0,c5:3.5},weighted:{c1:1.05,c2:0.60,c3:0.53,c4:0.45,c5:0.70},water:'Private canal (Branch El Gharbeya 2)',irrigation:'Drip (watermelon) + sprinkler (wheat/clover)',energy:'Grid available; reliability 34% only',soil:'Sandy loam; 54.72% coarse sand; FC=14.61%; ECe=0.34–0.38 dS/m; pH=7.8–7.95',waterQ:'EC 0.644–0.712 dS/m; TDS 450–500 mg/L; SAR 1.1–1.5',intervention:'Install an automated irrigation system with soil sensors and valves.',notes:'',socio:{edu:'Low–moderate; 10% university',phone:'Smartphone 80%; apps 90%',credit:'No finance access',coop:'Moderate (30%)',ext:'Training 14%'},builtin:true},
+  {id:'builtin_sohag',name:'Sohag',nameEn:'Abu Bakr A.H. Mohamed Farm',gov:'Tema District, Sohag Governorate — Upper Egypt',country:'EG',region:'Tema, Upper Egypt',crop:'Onion (Nov–Apr) / Garlic (Feb–Jun) rotation',lat:26.825,lng:31.3531,area:10,areaUnit:'feddans',level:'L3',levelNum:3,levelName:'Fully automated system Precision',sisi:3.44,color:'#f39c12',scores:{c1:3.0,c2:4.0,c3:3.5,c4:3.0,c5:3.8},weighted:{c1:0.90,c2:0.80,c3:0.53,c4:0.45,c5:0.76},water:'2 groundwater wells (Well 1 EC=1.47; Well 2 EC=2.18 dS/m) + drainage canal',irrigation:'Partial drip 4/10 fed; surface furrow 6 fed',energy:'Unreliable single-phase grid; solar irradiance 5.8 kWh/m²/day',soil:'Sandy loam; FC=19.8%; ECe=0.04–1.11 dS/m rising; pH=7.5–9.3',waterQ:'Well 1: EC 1.47, SAR 1.75; Well 2: EC 2.18, SAR 5.4',intervention:'Install a solar-powered irrigation system with soil sensors.',notes:'',socio:{edu:'Secondary; cooperative member',phone:'Smartphone; app use 16.7%',credit:'Cooperative credit',coop:'Active; prior tech adoption',ext:'Peer influence 100%'},builtin:true},
+  {id:'builtin_beheira_l4',name:'Beheira (L4)',nameEn:'El Maghraby Commercial Agricultural Co.',gov:'El Nobareya, Beheira Governorate — West Delta',country:'EG',region:'El Nobareya, West Delta',crop:'Vegetables 600 feddans',lat:30.7447,lng:30.1237,area:600,areaUnit:'feddans',level:'L4',levelNum:4,levelName:'Climate-Integrated',sisi:4.29,color:'#2ecc71',scores:{c1:4.5,c2:4.5,c3:4.0,c4:4.5,c5:3.8},weighted:{c1:1.35,c2:0.90,c3:0.60,c4:0.68,c5:0.76},water:'Licensed Nile canal + 12 deep wells (50–80 m)',irrigation:'Drip 4200 fed (70%); legacy SCADA 2800 fed; surface 1800 fed',energy:'HV substation 11kV/380V; fiber LAN; 4G LTE',soil:'Sandy 80%+; ECe=0.35–0.38 dS/m; pH=7.8–7.95',waterQ:'TDS 825 mg/L; SAR 2.0; pH 7.6',intervention:'Install a full SCADA irrigation system with weather station and sensors.',notes:'',socio:{edu:'PhD agronomist; corporate mgmt',phone:'Dedicated IT team; prior IoT',credit:'Full capital access',coop:'ISO 9001; EU export certification',ext:'In-house agronomists'},builtin:true},
+  {id:'builtin_beheira_l5',name:'Beheira (L5)',nameEn:'El Maghraby Farm — Precision Upgrade',gov:'El Nobareya, Beheira Governorate — West Delta',country:'EG',region:'El Nobareya, West Delta',crop:'Citrus 2200 · Olives 1400 · Grapes 800',lat:30.7647,lng:30.1437,area:2200,areaUnit:'feddans',level:'L5',levelNum:5,levelName:'Precision + UAV',sisi:4.50,color:'#9b59b6',scores:{c1:4.5,c2:5.0,c3:4.0,c4:5.0,c5:4.0},weighted:{c1:1.50,c2:0.80,c3:0.60,c4:0.75,c5:1.00},water:'Licensed Nile canal + deep wells',irrigation:'Full SCADA + UAV-assisted variable-rate irrigation zoning',energy:'HV substation + fiber optic + solar + 500kW diesel backup',soil:'Sandy soils 80%+',waterQ:'High quality for GlobalG.A.P. export crops',intervention:'Install UAV (drone) and AI-based precision irrigation system.',notes:'',socio:{edu:'PhD agronomist + corporate team',phone:'Full IT infrastructure + AI team',credit:'Full capital access',coop:'Export-certified; ISO 9001',ext:'In-house agronomy + AI data science team'},builtin:true}
+];
+
+const LC = {L1:'#e74c3c',L2:'#e67e22',L3:'#f1c40f',L4:'#2ecc71',L5:'#9b59b6'};
+const LF = {L1:'Level 1: Basic Smart Awareness',L2:'Level 2: Semi-Automated Drip',L3:'Level 3: Fully automated system',L4:'Level 4: Climate-Integrated',L5:'Level 5: Precision + UAV'};
+
+const govData = {
+  EG:['Alexandria','Aswan','Asyut','Beheira','Beni Suef','Cairo','Dakahlia','Damietta','Faiyum','Gharbia','Giza','Ismailia','Kafr El Sheikh','Luxor','Matruh','Minya','Monufia','New Valley','North Sinai','Port Said','Qalyoubeya','Qena','Red Sea','Sharqia','Sohag','South Sinai','Suez'],
+  MA:['Tanger-Tetouan','Oriental','Fès-Meknès','Rabat-Salé','Casablanca','Marrakech-Safi','Souss-Massa'],
+  TN:['Ariana','Bizerte','Gabès','Gafsa','Nabeul','Sfax','Sousse','Tunis'],
+  DZ:['Alger','Oran','Constantine','Annaba','Sétif','Biskra','Ouargla'],
+  SA:['Riyadh','Mecca','Medina','Eastern Province','Asir','Tabuk','Qassim'],
+  JO:['Amman','Irbid','Zarqa','Mafraq','Aqaba'],
+  IQ:['Baghdad','Basra','Nineveh','Erbil','Kirkuk'],
+  SD:['Khartoum','Gezira','River Nile','Northern','White Nile'],
+  ET:['Addis Ababa','Oromia','Amhara','SNNPR','Tigray'],
+  IN:['Gujarat','Haryana','Maharashtra','Punjab','Rajasthan','Tamil Nadu'],
+  TR:['Adana','Ankara','Antalya','İzmir','Konya','Şanlıurfa'],
+  OTHER:['Province/District 1','Province/District 2']
+};
+
+const monthlyET0 = {
+  nile_delta:[2.1,2.6,3.4,4.5,5.8,6.9,7.2,6.8,5.6,4.2,2.9,2.0],
+  upper_egypt:[2.3,3.1,4.4,5.9,7.5,8.8,8.9,8.3,6.8,5.1,3.2,2.2],
+  new_lands:[2.0,2.7,3.9,5.6,7.4,8.9,9.1,8.6,6.9,4.9,2.9,1.9],
+  sinai:[2.5,3.3,4.7,6.2,7.8,9.0,9.2,8.5,7.0,5.2,3.4,2.4],
+  maghreb:[1.6,2.2,3.2,4.5,5.9,7.2,7.8,7.2,5.4,3.7,2.2,1.5],
+  levant:[1.8,2.5,3.7,5.0,6.4,7.8,8.2,7.8,6.2,4.5,2.8,1.9],
+  arabian:[3.0,3.8,5.2,7.0,9.0,10.8,11.2,10.5,8.5,6.3,4.2,3.0],
+  sahel:[4.5,5.2,6.8,7.5,7.2,6.5,6.0,6.2,6.5,6.0,4.8,4.2],
+  south_asia:[2.8,3.5,4.8,6.2,7.0,5.5,4.8,4.5,4.2,3.8,3.0,2.5],
+  mediterranean:[1.2,1.6,2.5,3.7,5.2,6.8,7.5,7.0,5.2,3.5,2.0,1.2]
+};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const cropKc = {
+  wheat:{ini:0.30,mid:1.15,end:0.25,days:120},maize:{ini:0.30,mid:1.20,end:0.35,days:125},
+  rice:{ini:1.05,mid:1.20,end:0.75,days:130},cotton:{ini:0.45,mid:1.15,end:0.70,days:180},
+  tomato:{ini:0.60,mid:1.15,end:0.70,days:115},potato:{ini:0.50,mid:1.15,end:0.75,days:105},
+  onion:{ini:0.70,mid:1.05,end:0.75,days:150},garlic:{ini:0.70,mid:1.00,end:0.70,days:150},
+  citrus:{ini:0.65,mid:0.70,end:0.65,days:365},grapes:{ini:0.30,mid:0.85,end:0.45,days:180},
+  olive:{ini:0.65,mid:0.70,end:0.70,days:365},watermelon:{ini:0.40,mid:1.00,end:0.75,days:80},
+  clover:{ini:0.40,mid:0.90,end:0.85,days:60},alfalfa:{ini:0.40,mid:0.95,end:0.90,days:365}
+};
+
+// ════════════════════════════════
+// CORE HELPERS
+// ════════════════════════════════
+function v(id){ const el=document.getElementById(id); return el ? el.value : ''; }
+function getAllFarms(){ return [...builtinFarms, ...userFarms]; }
+function setChip(s){
+  const el=document.getElementById('saveChip'); if(!el)return;
+  if(s==='saved'){el.textContent='✓ Cloud saved';el.className='save-chip saved';}
+  else{el.textContent='◌ Saving...';el.className='save-chip saving';}
 }
 
-// ═══════ AUTH TAB SWITCHER ═══════
-function showAuthTab(tab){
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',['login','register'][i]===tab));
-  document.getElementById('loginForm').style.display   = tab==='login'    ? '' : 'none';
-  document.getElementById('registerForm').style.display = tab==='register' ? '' : 'none';
-}
-
-// ═══════ LOGIN / AUTH ═══════
-async function doLogin(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginError');
-  const btn   = document.getElementById('loginBtn');
-  errEl.textContent = '';
-  if(!email||!pass){errEl.textContent='Please enter email and password.';return;}
-  btn.textContent = 'Signing in…'; btn.disabled = true;
-  try{
-    const sb = getSB();
-    if(!sb) throw new Error('Supabase not loaded yet. Please wait a moment and try again.');
-    const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
-    if(error) throw error;
-    document.getElementById('authScreen').style.display = 'none';
-    setCloudChip('synced','☁ Signed in');
-    await loadCloudFarms();
-  } catch(e){
-    errEl.textContent = e.message || 'Login failed.';
-  }
-  btn.textContent = 'Sign In →'; btn.disabled = false;
-}
-
-async function doRegister(){
-  const name  = document.getElementById('regName').value.trim();
-  const inst  = document.getElementById('regInstitution').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const pass  = document.getElementById('regPass').value;
-  const errEl = document.getElementById('registerError');
-  const sucEl = document.getElementById('registerSuccess');
-  const btn   = document.getElementById('registerBtn');
-  errEl.textContent = ''; sucEl.textContent = '';
-  if(!name||!email||!pass){errEl.textContent='Please fill all required fields.';return;}
-  if(pass.length < 8){errEl.textContent='Password must be at least 8 characters.';return;}
-  btn.textContent = 'Creating account…'; btn.disabled = true;
-  try{
-    const sb = getSB();
-    if(!sb) throw new Error('Supabase not loaded yet.');
-    const {data, error} = await sb.auth.signUp({
-      email, password: pass,
-      options:{ data:{ full_name: name, institution: inst } }
-    });
-    if(error) throw error;
-    sucEl.textContent = '✅ Account created! Please check your email to confirm, then sign in.';
-    setTimeout(()=>showAuthTab('login'), 2500);
-  } catch(e){
-    errEl.textContent = e.message || 'Registration failed.';
-  }
-  btn.textContent = 'Create Account →'; btn.disabled = false;
-}
-
-function setCloudChip(status, label){
-  const el = document.getElementById('cloudChip');
-  if(!el) return;
-  el.textContent = label;
-  el.className = 'cloud-chip ' + status;
-}
-
-// ═══════ CLOUD SAVE ═══════
-async function saveToCloud(farm){
-  const sb = getSB();
-  if(!sb) return;
-  const {data:{user}} = await sb.auth.getUser();
-  if(!user) return;
-  setCloudChip('syncing','☁ Saving…');
-  try{
-    const row = {
-      id: farm.id,
-      user_id: user.id,
-      name: farm.name,
-      country: farm.country||'EG',
-      gov: farm.gov||'',
-      region: farm.region||'',
-      crop: farm.crop||'',
-      area: farm.area||0,
-      area_unit: farm.areaUnit||'feddans',
-      lat: farm.lat||0,
-      lng: farm.lng||0,
-      c1: farm.scores?.c1||0,
-      c2: farm.scores?.c2||0,
-      c3: farm.scores?.c3||0,
-      c4: farm.scores?.c4||0,
-      c5: farm.scores?.c5||0,
-      sisi: farm.sisi||0,
-      level: farm.level||'',
-      level_name: farm.levelName||'',
-      intervention: farm.intervention||'',
-      notes: farm.notes||'',
-      water: farm.water||'',
-      irrigation: farm.irrigation||'',
-      energy: farm.energy||'',
-      soil: farm.soil||'',
-      water_q: farm.waterQ||'',
-      added_at: farm.addedAt||new Date().toISOString(),
-      farm_json: JSON.stringify(farm)
-    };
-    const {error} = await sb.from('sisi_farms').upsert(row, {onConflict:'id'});
-    if(error) throw error;
-    setCloudChip('synced','☁ Synced ✓');
-  } catch(e){
-    setCloudChip('nosync','☁ Sync error');
-    console.error('Cloud save error:',e);
-  }
-}
-
-async function deleteFromCloud(id){
-  const sb = getSB();
-  if(!sb) return;
-  const {data:{user}} = await sb.auth.getUser();
-  if(!user) return;
-  try{
-    await sb.from('sisi_farms').delete().eq('id', id);
-  } catch(e){ console.error('Cloud delete error:',e); }
-}
-
-async function loadCloudFarms(){
-  const sb = getSB();
-  if(!sb) return;
-  const {data:{user}} = await sb.auth.getUser();
-  if(!user) return;
-  setCloudChip('syncing','☁ Loading…');
-  try{
-    const {data, error} = await sb.from('sisi_farms').select('farm_json').eq('user_id', user.id);
-    if(error) throw error;
-    if(data && data.length){
-      // Merge cloud farms into userFarms (avoid duplicates)
-      const existingIds = new Set(userFarms.map(f=>f.id));
-      const cloudFarms = data.map(r=>{
-        try{ return JSON.parse(r.farm_json); } catch{ return null; }
-      }).filter(Boolean);
-      cloudFarms.forEach(cf=>{
-        if(!existingIds.has(cf.id)){
-          userFarms.push(cf);
-          existingIds.add(cf.id);
-        }
-      });
-      // Save merged result locally
-      saveLocalOnly();
-      renderRegistry();
-      buildFarmGrid();
-      refreshMapMarkers();
-    }
-    setCloudChip('synced','☁ Synced ✓');
-  } catch(e){
-    setCloudChip('nosync','☁ Load error');
-    console.error('Cloud load error:',e);
-  }
-}
-
-// ═══════ STATE & STORAGE ═══════
-let userFarms=[];
-let map;
-let autoSaveTimer=null;
-const STORAGE_KEY='sisi_global_v4';
-
-function saveLocalOnly(){
-  try{
-    const state={userFarms,form:captureForm(),calc:{c1:v('c1'),c2:v('c2'),c3:v('c3'),c4:v('c4'),c5:v('c5')},et:captureET(),savedAt:new Date().toISOString()};
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-    setChip('saved');
-  }catch(e){setChip('error');}
-}
-
-function saveAll(){
-  saveLocalOnly();
-  // Cloud save is triggered only when adding/deleting farms (not on every keystroke)
-}
-
-function loadAll(){
-  try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw)return;
-    const s=JSON.parse(raw);
-    if(s.userFarms)userFarms=s.userFarms;
-    if(s.form)restoreForm(s.form);
-    if(s.calc){['c1','c2','c3','c4','c5'].forEach(k=>{if(s.calc[k]){const el=document.getElementById(k);if(el)el.value=s.calc[k];}});}
-    if(s.et)restoreET(s.et);
-  }catch(e){}
-}
-
-function v(id){const el=document.getElementById(id);return el?el.value:'';}
-
-function captureForm(){
-  const ids=['inp_name','inp_region','inp_country','inp_gov','inp_area','inp_areaunit','inp_lat','inp_lng','inp_crop','inp_notes','inp_water','inp_irrigation','inp_energy','inp_soil','inp_waterq'];
-  const o={};ids.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.value;});return o;
-}
-function restoreForm(fd){
-  if(!fd)return;
-  if(fd.inp_country){const el=document.getElementById('inp_country');if(el){el.value=fd.inp_country;updateGovList(fd.inp_country);}}
-  setTimeout(()=>{Object.entries(fd).forEach(([id,val])=>{if(id!=='inp_country'){const el=document.getElementById(id);if(el)el.value=val;}});},60);
-}
-
-function captureET(){
-  const ids=['et_lat','et_elev','et_zone','et_tmean','et_wind','et_rh','et_sun','et_crop','et_area','kc_ini','kc_mid','kc_end','et_days','et_eff','et_lf'];
-  const o={};ids.forEach(id=>{const el=document.getElementById(id);if(el)o[id]=el.value;});return o;
-}
-function restoreET(fd){
-  if(!fd)return;
-  Object.entries(fd).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
-}
-
-function setChip(status){
-  const el=document.getElementById('saveChip');if(!el)return;
-  if(status==='saved'){el.textContent='✓ Auto-saved';el.className='save-chip saved';}
-  else if(status==='saving'){el.textContent='◌ Saving...';el.className='save-chip saving';}
-  else if(status==='offline'){el.textContent='⚡ Offline — data safe';el.className='save-chip offline';}
-}
-
-function triggerAutoSave(){
-  setChip('saving');
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer=setTimeout(saveAll,900);
-}
-
-// ═══════ GOVS ═══════
-function updateGovList(force){
-  const country=force||v('inp_country')||'EG';
-  const govs=govData[country]||govData['OTHER'];
-  const sel=document.getElementById('inp_gov');if(!sel)return;
-  sel.innerHTML='<option value="">— Select —</option>'+govs.map(g=>`<option>${g}</option>`).join('');
-}
-
-// ═══════ SISI CALC ═══════
 function getRangeLabel(sisi){
-  if(sisi<=2.0)return{level:'L1',range:'1.00–2.00',name:'Basic Smart Awareness'};
-  if(sisi<=2.8)return{level:'L2',range:'2.01–2.80',name:'Semi-Automated Drip Irrigation'};
-  if(sisi<=3.6)return{level:'L3',range:'2.81–3.60',name:'Fully automated system'};
-  if(sisi<=4.4)return{level:'L4',range:'3.61–4.40',name:'Climate-Integrated Dynamic Irrigation'};
-  return{level:'L5',range:'4.41–5.00',name:'Full Autonomous Precision + UAV'};
+  if(sisi<=2.0) return {level:'L1',range:'1.00–2.00',name:'Basic Smart Awareness'};
+  if(sisi<=2.8) return {level:'L2',range:'2.01–2.80',name:'Semi-Automated Drip'};
+  if(sisi<=3.6) return {level:'L3',range:'2.81–3.60',name:'Fully automated system'};
+  if(sisi<=4.4) return {level:'L4',range:'3.61–4.40',name:'Climate-Integrated'};
+  return {level:'L5',range:'4.41–5.00',name:'Full Autonomous Precision + UAV'};
 }
 
 function getInterventionHTML(level){
   const t={
-    L1:'🌱 <b>L1 — Basic Smart Awareness:</b> Soil moisture sensor nodes + solar GSM data logger + Arabic SMS/WhatsApp daily advisory. Manual pump control. No infrastructure changes. Water saving: 10–20%. Cost: EGP 25–45K.',
-    L2:'💧 <b>L2 — Semi-Automated Drip:</b> Pressurized drip (≥50% farm) + 8–16 zone GSM controller + soil sensors + mobile app + Venturi fertigation. Timer automation. Water saving: 20–35%. Cost: EGP 60–120K.',
-    L3:'⚙️ <b>L3 — Fully automated system:</b> Full 100% drip + solenoid valves + LoRaWAN soil sensor network (5–8 nodes) + industrial VWC-threshold closed-loop controller + SCADA mobile app. Water saving: 30–45%. Cost: EGP 150–350K.',
-    L4:'🌤️ <b>L4 — Climate-Integrated:</b> Multi-zone SCADA + full-spec AWS + soil arrays (30/60/90 cm) + Penman-Monteith ET₀ + ETc = Kc×ET₀ + 7-day NWP API + AI scheduling engine. Water saving: 35–50%. Cost: EGP 500K–1.5M.',
-    L5:'🚁 <b>L5 — Full Autonomous Precision + UAV:</b> Enterprise SCADA + DJI Matrice 300 RTK UAV + MicaSense 5-band multispectral + NDVI/NDWI/NDRE stress maps + PyTorch ML model + Digital Twin + Variable-Rate Irrigation. Water saving: 40–65%. Cost: EGP >2M.'
+    L1:'🌱 <b>L1:</b> Soil moisture sensors + SMS advisory. Water saving 10–20%. Cost EGP 25–45K.',
+    L2:'💧 <b>L2:</b> Drip + GSM controller + soil sensors. Water saving 20–35%. Cost EGP 60–120K.',
+    L3:'⚙️ <b>L3:</b> Full drip + LoRaWAN sensors + SCADA. Water saving 30–45%. Cost EGP 150–350K.',
+    L4:'🌤️ <b>L4:</b> Multi-zone SCADA + AWS + Penman-Monteith ET₀ + AI. Water saving 35–50%. Cost EGP 500K–1.5M.',
+    L5:'🚁 <b>L5:</b> Enterprise SCADA + UAV + ML + VRI. Water saving 40–65%. Cost EGP >2M.'
   };
   return t[level]||'';
 }
+
 function getInterventionText(level){
-  const t={L1:'Install 1–2 soil moisture sensors only.',L2:'Install a basic drip irrigation system with controller.',L3:'Install an automated irrigation system with soil sensors and valves.',L4:'Install a full SCADA irrigation system with weather station and sensors.',L5:'Install UAV (drone) and AI-based precision irrigation system.'};
+  const t={
+    L1:'Install 1–2 soil moisture sensors only.',
+    L2:'Install a basic drip irrigation system with controller.',
+    L3:'Install an automated irrigation system with soil sensors and valves.',
+    L4:'Install a full SCADA irrigation system with weather station and sensors.',
+    L5:'Install UAV (drone) and AI-based precision irrigation system.'
+  };
   return t[level]||'';
 }
 
+function updateGovList(force){
+  const c = force || v('inp_country') || 'EG';
+  const govs = govData[c] || govData['OTHER'];
+  const sel = document.getElementById('inp_gov'); if(!sel) return;
+  sel.innerHTML = '<option value="">— Select —</option>' + govs.map(g=>`<option>${g}</option>`).join('');
+}
+
+// ════════════════════════════════
+// AUTH
+// ════════════════════════════════
+function showAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',['login','register'][i]===tab));
+  document.getElementById('loginForm').style.display  = tab==='login'    ? 'flex' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? 'flex' : 'none';
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const btn=document.getElementById('loginBtn');
+  const err=document.getElementById('loginError');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Please enter email and password.';err.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Signing in...';
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false; btn.textContent='Sign In →';
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  await onLogin(data.user);
+}
+
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const institution=document.getElementById('regInstitution').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPass').value;
+  const btn=document.getElementById('registerBtn');
+  const err=document.getElementById('registerError');
+  const suc=document.getElementById('registerSuccess');
+  err.style.display='none'; suc.style.display='none';
+  if(!name||!email||!pass){err.textContent='Please fill all required fields.';err.style.display='block';return;}
+  if(pass.length<8){err.textContent='Password must be at least 8 characters.';err.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Creating account...';
+  const {data,error} = await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,institution}}});
+  btn.disabled=false; btn.textContent='Create Account →';
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  suc.textContent='✅ Account created! Check your email to confirm, then sign in.';
+  suc.style.display='block';
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null; userFarms=[];
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+  // Reset map so it re-inits on next login
+  if(map){ map.remove(); map=null; mapInitialized=false; }
+}
+
+async function onLogin(user){
+  currentUser = user;
+  const isAdmin = user.email === ADMIN_EMAIL;
+  document.getElementById('userChip').textContent = '👤 ' + (user.user_metadata?.full_name || user.email) + (isAdmin?' 🔐':'');
+  if(isAdmin) document.getElementById('adminTab').style.display='';
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+
+  // Load farms first, then render everything
+  await loadUserFarms();
+  buildFarmGrid();
+  renderRegistry();
+  calcSISI();
+  loadCropKc();
+  // Init map after a short delay to let DOM settle
+  setTimeout(()=>{ initMap(); calcET(); }, 400);
+}
+
+// ════════════════════════════════
+// SUPABASE — LOAD / SAVE / DELETE
+// ════════════════════════════════
+async function loadUserFarms(){
+  setChip('saving');
+  const {data,error} = await sb.from('farms').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  if(!error && data){
+    // Spread farm_data, then overwrite id with the Supabase row id (UUID)
+    // This ensures no collision with builtin ids
+    userFarms = data.map(r => ({
+      ...r.farm_data,
+      id: r.id,            // Supabase UUID — unique, no collision
+      supabase_id: r.id,
+      builtin: false,
+      addedAt: r.created_at
+    }));
+  }
+  setChip('saved');
+}
+
+async function addFarm(){
+  if(!currentUser){ alert('Please sign in first.'); return; }
+
+  const name      = v('inp_name').trim();
+  const gov       = v('inp_gov');
+  const region    = v('inp_region').trim();
+  const country   = v('inp_country');
+  const area      = parseFloat(v('inp_area')) || 0;
+  const areaUnit  = v('inp_areaunit') || 'feddans';
+  const lat       = parseFloat(v('inp_lat'));
+  const lng       = parseFloat(v('inp_lng'));
+  const crop      = v('inp_crop').trim();
+  const notes     = v('inp_notes').trim();
+  const water     = v('inp_water').trim();
+  const irrigation= v('inp_irrigation').trim();
+  const energy    = v('inp_energy').trim();
+  const soil      = v('inp_soil').trim();
+  const waterQ    = v('inp_waterq').trim();
+
+  if(!name)                            { alert('Please enter a farm name.'); return; }
+  if(!gov)                             { alert('Please select a governorate.'); return; }
+  if(isNaN(lat)||lat<-90||lat>90)      { alert('Invalid latitude (must be -90 to +90).'); return; }
+  if(isNaN(lng)||lng<-180||lng>180)    { alert('Invalid longitude (must be -180 to +180).'); return; }
+
+  const c1 = parseFloat(v('c1'));
+  const c2 = parseFloat(v('c2'));
+  const c3 = parseFloat(v('c3'));
+  const c4 = parseFloat(v('c4'));
+  const c5 = parseFloat(v('c5'));
+  const sisi = +(0.30*c1 + 0.20*c2 + 0.15*c3 + 0.15*c4 + 0.20*c5).toFixed(2);
+  const info = getRangeLabel(sisi);
+  const lc   = LC[info.level] || '#1565c0';
+
+  // Build the farm_data object — NO id field here, Supabase provides it
+  const farmData = {
+    name, nameEn: name,
+    country, gov: gov + (region ? ' — '+region : ''), region,
+    crop, lat, lng, area, areaUnit,
+    level: info.level,
+    levelNum: parseInt(info.level.replace('L','')) || 0,
+    levelName: info.name,
+    sisi, color: lc,
+    scores:   { c1, c2, c3, c4, c5 },
+    weighted: {
+      c1: +(c1*0.30).toFixed(3),
+      c2: +(c2*0.20).toFixed(3),
+      c3: +(c3*0.15).toFixed(3),
+      c4: +(c4*0.15).toFixed(3),
+      c5: +(c5*0.20).toFixed(3)
+    },
+    water:      water      || '—',
+    irrigation: irrigation || '—',
+    energy:     energy     || '—',
+    soil:       soil       || '—',
+    waterQ:     waterQ     || '—',
+    intervention: getInterventionText(info.level),
+    notes,
+    socio: { edu:'—', phone:'—', credit:'—', coop:'—', ext:'—' }
+  };
+
+  const btn = document.getElementById('saveFarmBtn');
+  btn.disabled=true; btn.textContent='⏳ Saving...';
+  setChip('saving');
+
+  const {data, error} = await sb.from('farms')
+    .insert({ user_id: currentUser.id, farm_data: farmData })
+    .select()
+    .single();
+
+  btn.disabled=false; btn.textContent='➕ Save Farm to Cloud & Map';
+
+  if(error){ alert('Error saving: '+error.message); setChip('saving'); return; }
+
+  // Build the complete farm object with the Supabase id
+  const saved = {
+    ...farmData,
+    id:          data.id,
+    supabase_id: data.id,
+    builtin:     false,
+    addedAt:     data.created_at
+  };
+
+  userFarms.unshift(saved);
+  setChip('saved');
+
+  // Update all views
+  renderRegistry();
+  buildFarmGrid();
+
+  // Add to map — works whether map tab is open or not
+  if(mapInitialized){
+    addMarkerToMap(saved);
+  }
+
+  // Clear form fields
+  ['inp_name','inp_region','inp_area','inp_lat','inp_lng',
+   'inp_crop','inp_notes','inp_water','inp_irrigation',
+   'inp_energy','inp_soil','inp_waterq'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('inp_gov').value='';
+
+  alert(`✅ "${name}" saved!\nSISI: ${sisi} → ${info.level} (${info.name})\n\nVisible on map and in all tabs.`);
+}
+
+async function deleteFarm(id){
+  if(!confirm('Remove this farm from the cloud?')) return;
+  const {error} = await sb.from('farms').delete().eq('id',id).eq('user_id',currentUser.id);
+  if(error){ alert('Error: '+error.message); return; }
+  userFarms = userFarms.filter(f => f.id !== id);
+  renderRegistry();
+  buildFarmGrid();
+  refreshMapMarkers();  // redraws ALL farms including builtins
+}
+
+async function clearMyFarms(){
+  if(!userFarms.length){ alert('No farms to clear.'); return; }
+  if(!confirm(`Delete all ${userFarms.length} of your farms from the cloud?`)) return;
+  const {error} = await sb.from('farms').delete().eq('user_id',currentUser.id);
+  if(error){ alert('Error: '+error.message); return; }
+  userFarms = [];
+  renderRegistry();
+  buildFarmGrid();
+  refreshMapMarkers();
+}
+
+// ════════════════════════════════
+// ADMIN
+// ════════════════════════════════
+async function adminLoadAll(){
+  const {data,error} = await sb.from('farms').select('*').order('created_at',{ascending:false});
+  if(error){ document.getElementById('adminContent').innerHTML='<div class="empty-state">Error: '+error.message+'</div>'; return; }
+  if(!data.length){ document.getElementById('adminContent').innerHTML='<div class="empty-state">No farms in database yet.</div>'; return; }
+  const allFarms = data.map(r=>({...r.farm_data, id:r.id, user_id:r.user_id, addedAt:r.created_at}));
+  let html = `<div style="font-size:12px;color:#888;margin-bottom:10px">${allFarms.length} total farms from all users</div>`;
+  html += `<div style="overflow-x:auto"><table class="registry-table"><thead><tr><th>#</th><th>User ID</th><th>Farm</th><th>Gov</th><th>Crop</th><th>SISI</th><th>Level</th><th>Added</th></tr></thead><tbody>`;
+  allFarms.forEach((f,i)=>{
+    html += `<tr><td style="color:#aaa">${i+1}</td><td style="font-family:monospace;font-size:10px;color:#888">${(f.user_id||'').substring(0,8)}...</td><td><b style="color:${f.color}">${f.name}</b></td><td>${(f.gov||'').split(' — ')[0]}</td><td>${(f.crop||'').substring(0,20)}</td><td style="font-weight:700;color:${f.color}">${f.sisi}</td><td><span class="level-badge" style="background:${f.color}20;color:${f.color};font-size:10px">${f.level}</span></td><td style="font-size:10px;color:#888">${new Date(f.addedAt).toLocaleDateString()}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  document.getElementById('adminContent').innerHTML = html;
+}
+
+async function adminExportCSV(){
+  const {data,error} = await sb.from('farms').select('*').order('created_at',{ascending:false});
+  if(error){ alert('Error: '+error.message); return; }
+  const rows = [['#','User_ID','Name','Gov','Region','Crop','Area','Lat','Lng','C1','C2','C3','C4','C5','SISI','Level','Added']];
+  data.forEach((r,i)=>{
+    const f=r.farm_data||{}; const s=f.scores||{};
+    rows.push([i+1,r.user_id,f.name||'',f.gov||'',f.region||'',f.crop||'',f.area||'',f.lat||'',f.lng||'',s.c1||'',s.c2||'',s.c3||'',s.c4||'',s.c5||'',f.sisi,f.level,new Date(r.created_at).toLocaleDateString()]);
+  });
+  const csv = rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dlBlob('\uFEFF'+csv, 'text/csv', `SISI_ALL_USERS_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ════════════════════════════════
+// SISI CALCULATOR PREVIEW
+// ════════════════════════════════
 function calcSISI(){
-  const c1=parseFloat(v('c1'));const c2=parseFloat(v('c2'));const c3=parseFloat(v('c3'));const c4=parseFloat(v('c4'));const c5=parseFloat(v('c5'));
-  const sisi=+(0.30*c1+0.20*c2+0.15*c3+0.15*c4+0.20*c5).toFixed(2);
-  const info=getRangeLabel(sisi);
-  const lc=levelColors[info.level]||'#1565c0';
-  const wts=[0.30,0.20,0.15,0.15,0.20];
-  const cVals=[c1,c2,c3,c4,c5];
-  const cLbls=['C₁ Irrigation (0.30)','C₂ Energy (0.20)','C₃ Soil (0.15)','C₄ Crop (0.15)','C₅ Socioeconomic (0.20)'];
+  const c1=parseFloat(v('c1')), c2=parseFloat(v('c2')), c3=parseFloat(v('c3')), c4=parseFloat(v('c4')), c5=parseFloat(v('c5'));
+  const sisi = +(0.30*c1+0.20*c2+0.15*c3+0.15*c4+0.20*c5).toFixed(2);
+  const info = getRangeLabel(sisi);
+  const lc   = LC[info.level]||'#1565c0';
+  const wts  = [0.30,0.20,0.15,0.15,0.20];
+  const cVals= [c1,c2,c3,c4,c5];
+  const cLbls= ['C₁ Irrigation (0.30)','C₂ Energy (0.20)','C₃ Soil (0.15)','C₄ Crop (0.15)','C₅ Socioeconomic (0.20)'];
   const colors=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
-  const rows=cVals.map((val,i)=>`
+  const rows = cVals.map((val,i)=>`
     <div class="crit-row">
       <div class="crit-label">${cLbls[i]}</div>
       <div class="crit-bar-wrap"><div class="crit-bar" style="width:${val*20}%;background:${colors[i]}"></div></div>
       <div class="crit-val">${val} × ${wts[i]} = ${(val*wts[i]).toFixed(3)}</div>
     </div>`).join('');
-  const box=document.getElementById('calcResult');
+  const box = document.getElementById('calcResult');
   box.style.display='block';
   box.innerHTML=`
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#444">SISI Calculation Preview</div>
@@ -900,166 +827,22 @@ function calcSISI(){
     <div class="intervention-box">${getInterventionHTML(info.level)}</div>`;
 }
 
-// ═══════ ADD FARM ═══════
-function addFarmToRegistry(){
-  const name=v('inp_name').trim();
-  const country=v('inp_country');
-  const gov=v('inp_gov');
-  const region=v('inp_region').trim();
-  const area=parseFloat(v('inp_area'))||0;
-  const areaUnit=v('inp_areaunit')||'feddans';
-  const lat=parseFloat(v('inp_lat'));
-  const lng=parseFloat(v('inp_lng'));
-  const crop=v('inp_crop').trim();
-  const notes=v('inp_notes').trim();
-  const water=v('inp_water').trim();
-  const irrigation=v('inp_irrigation').trim();
-  const energy=v('inp_energy').trim();
-  const soil=v('inp_soil').trim();
-  const waterQ=v('inp_waterq').trim();
-  if(!name){alert('Please enter a farm name.');return;}
-  if(!gov){alert('Please select a governorate.');return;}
-  if(isNaN(lat)||lat<-90||lat>90){alert('Invalid latitude (-90 to 90).');return;}
-  if(isNaN(lng)||lng<-180||lng>180){alert('Invalid longitude (-180 to 180).');return;}
-  const c1=parseFloat(v('c1'));const c2=parseFloat(v('c2'));const c3=parseFloat(v('c3'));const c4=parseFloat(v('c4'));const c5=parseFloat(v('c5'));
-  const sisi=+(0.30*c1+0.20*c2+0.15*c3+0.15*c4+0.20*c5).toFixed(2);
-  const info=getRangeLabel(sisi);
-  const lc=levelColors[info.level]||'#1565c0';
-  const farm={
-    id:'user_'+Date.now(),name,nameEn:name,country,gov:gov+(region?' — '+region:''),region,crop,
-    lat,lng,area,areaUnit,level:info.level,levelNum:parseInt(info.level.replace('L','')||'0'),
-    levelName:info.name,sisi,color:lc,
-    scores:{c1,c2,c3,c4,c5},
-    weighted:{c1:+(c1*.30).toFixed(3),c2:+(c2*.20).toFixed(3),c3:+(c3*.15).toFixed(3),c4:+(c4*.15).toFixed(3),c5:+(c5*.20).toFixed(3)},
-    water:water||'—',irrigation:irrigation||'—',energy:energy||'—',soil:soil||'—',waterQ:waterQ||'—',
-    intervention:getInterventionText(info.level),
-    socio:{edu:'—',phone:'—',credit:'—',coop:'—',ext:'—'},
-    notes,addedAt:new Date().toISOString(),builtin:false
-  };
-  userFarms.push(farm);
-  saveAll();
-  renderRegistry();
-  buildFarmGrid();
-  addMarkerToMap(farm);
-  // ── Cloud save (dual-save) ──
-  saveToCloud(farm);
-  ['inp_name','inp_region','inp_area','inp_lat','inp_lng','inp_crop','inp_notes','inp_water','inp_irrigation','inp_energy','inp_soil','inp_waterq'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('inp_gov').value='';
-  alert(`✅ "${name}" saved permanently!\nSISI: ${sisi} → ${info.level} (${info.name})\n\nSaved locally + synced to cloud ☁`);
-}
-
-// ═══════ REGISTRY RENDER ═══════
-function renderRegistry(){
-  const q=v('registrySearch').toLowerCase();
-  const all=getAllFarms();
-  const filtered=all.filter(f=>!q||(f.name||'').toLowerCase().includes(q)||(f.gov||'').toLowerCase().includes(q)||(f.country||'').toLowerCase().includes(q));
-  const tbody=document.getElementById('registryBody');
-  const empty=document.getElementById('registryEmpty');
-  const cnt=document.getElementById('regCount');
-  if(cnt)cnt.textContent=filtered.length+' farms';
-  if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=filtered.map((f,i)=>`
-    <tr>
-      <td style="color:#aaa">${i+1}</td>
-      <td><b style="color:${f.color}">${f.name}</b>${f.builtin?'<span class="tag tag-builtin">pilot</span>':'<span class="tag tag-user">user</span>'}</td>
-      <td>${f.country?'['+f.country+'] ':''} ${(f.gov||'').split(' — ')[0]}</td>
-      <td style="color:#888">${f.region||'—'}</td>
-      <td style="color:#666">${(f.crop||'—').substring(0,22)}</td>
-      <td>${f.area||'—'} ${f.areaUnit||''}</td>
-      <td style="font-family:monospace;font-size:10px">${f.lat||'—'}</td>
-      <td style="font-family:monospace;font-size:10px">${f.lng||'—'}</td>
-      <td style="text-align:center">${f.scores?.c1||'—'}</td>
-      <td style="text-align:center">${f.scores?.c2||'—'}</td>
-      <td style="text-align:center">${f.scores?.c3||'—'}</td>
-      <td style="text-align:center">${f.scores?.c4||'—'}</td>
-      <td style="text-align:center">${f.scores?.c5||'—'}</td>
-      <td style="text-align:center;font-weight:700;color:${f.color}">${f.sisi}</td>
-      <td style="text-align:center"><span class="level-badge" style="background:${f.color}20;color:${f.color};font-size:10px">${f.level}</span></td>
-      <td>${f.builtin?'<span style="color:#aaa;font-size:11px">built-in</span>':`<button onclick="deleteFarm('${f.id}')" style="background:#fce4ec;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;color:#c62828">✕</button>`}</td>
-    </tr>`).join('');
-}
-
-function deleteFarm(id){
-  if(!confirm('Remove this farm?'))return;
-  userFarms=userFarms.filter(f=>f.id!==id);
-  saveAll();renderRegistry();buildFarmGrid();refreshMapMarkers();
-  deleteFromCloud(id);
-}
-function clearUserFarms(){
-  if(!userFarms.length){alert('No user farms to clear.');return;}
-  if(!confirm(`Remove all ${userFarms.length} user-added farm(s)?`))return;
-  const ids = userFarms.map(f=>f.id);
-  userFarms=[];saveAll();renderRegistry();buildFarmGrid();refreshMapMarkers();
-  ids.forEach(id=>deleteFromCloud(id));
-}
-function getAllFarms(){return[...builtinFarms,...userFarms];}
-
-// ═══════ MAP ═══════
-function initMap(){
-  if(map)return;
-  map=L.map('map',{center:[27,30],zoom:5});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
-  getAllFarms().forEach(addMarkerToMap);
-}
-function addMarkerToMap(f){
-  if(!map||!f.lat||!f.lng)return;
-  const dashed=!f.builtin?'border:2.5px dashed #fff;':'border:3px solid #fff;';
-  const icon=L.divIcon({
-    html:`<div style="width:40px;height:40px;border-radius:50%;background:${f.color};${dashed}display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)">L${f.levelNum||'?'}</div>`,
-    className:'',iconSize:[40,40],iconAnchor:[20,20]
-  });
-  const m=L.marker([f.lat,f.lng],{icon}).addTo(map);
-  m.bindPopup(buildPopup(f),{maxWidth:300});
-}
-function refreshMapMarkers(){
-  if(!map)return;
-  map.eachLayer(l=>{if(l instanceof L.Marker)map.removeLayer(l);});
-  getAllFarms().forEach(addMarkerToMap);
-}
-function buildPopup(f){
-  const cKeys=['c1','c2','c3','c4','c5'];
-  const cLbls=['C₁ Irrigation','C₂ Energy','C₃ Soil','C₄ Crop','C₅ Socio'];
-  const cols=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
-  const bars=cKeys.map((k,i)=>`
-    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
-      <span style="font-size:10px;color:#888;min-width:75px">${cLbls[i]}</span>
-      <div style="flex:1;background:#e0e0e0;height:5px;border-radius:2px">
-        <div style="width:${(f.scores||{})[k]*20||0}%;background:${cols[i]};height:5px;border-radius:2px"></div>
-      </div>
-      <span style="font-size:10px;font-weight:700;min-width:16px">${(f.scores||{})[k]||'—'}</span>
-    </div>`).join('');
-  return `<div style="font-family:Arial,sans-serif;min-width:260px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-      <div style="width:40px;height:40px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">L${f.levelNum||'?'}</div>
-      <div>
-        <b style="font-size:14px">${f.name}</b>${f.country?` <span style="font-size:9px;background:#e3f2fd;border-radius:3px;padding:1px 4px">${f.country}</span>`:''}
-        <div style="font-size:11px;color:#666">${f.gov||''}</div>
-        <div style="font-size:11px;color:#888">${f.area?f.area+' '+(f.areaUnit||''):''}${f.crop?' · '+(f.crop.substring(0,25)):''}</div>
-      </div>
-    </div>
-    <div style="background:#f5f5f5;border-radius:7px;padding:7px;margin-bottom:7px">
-      <div style="font-size:10px;color:#888">SISI Score</div>
-      <div style="font-size:26px;font-weight:700;color:${f.color}">${f.sisi}</div>
-      <div style="font-size:11px;color:#444">${levelFull[f.level]||f.levelName||''}</div>
-    </div>
-    ${bars}
-    ${!f.builtin?'<div style="margin-top:5px;font-size:10px;color:#aaa">User-added · '+new Date(f.addedAt||Date.now()).toLocaleDateString()+'</div>':''}
-  </div>`;
-}
-
-// ═══════ FARM GRID + DETAIL (ALL FARMS) ═══════
+// ════════════════════════════════
+// FARM GRID & DETAIL
+// ════════════════════════════════
 function buildFarmGrid(){
-  const all=getAllFarms();
-  const titleEl=document.getElementById('farmsTitle');
-  if(titleEl)titleEl.textContent=`All Farms (${all.length} total — ${builtinFarms.length} pilot, ${userFarms.length} user-added)`;
-  document.getElementById('farmGrid').innerHTML=all.map(f=>`
+  const all = getAllFarms();
+  const titleEl = document.getElementById('farmsTitle');
+  if(titleEl) titleEl.textContent = `All Farms (${all.length} — ${builtinFarms.length} pilot, ${userFarms.length} mine)`;
+  document.getElementById('farmGrid').innerHTML = all.map(f=>`
     <div class="farm-card" id="fc-${f.id}" onclick="showFarmDetail('${f.id}')">
-      ${!f.builtin?'<div class="user-tag">MY FARM</div>':''}
+      ${f.builtin ? '<div class="pilot-tag">PILOT</div>' : '<div class="mine-tag">MINE</div>'}
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
         <div class="farm-badge" style="background:${f.color}20;color:${f.color}">L${f.levelNum}</div>
-        <div><div style="font-size:13px;font-weight:600">${f.name}</div>
-          <div style="font-size:10px;color:#888">${(f.area||0).toLocaleString()} ${f.areaUnit||'feddans'}</div></div>
+        <div>
+          <div style="font-size:13px;font-weight:600">${f.name}</div>
+          <div style="font-size:10px;color:#888">${(f.area||0).toLocaleString()} ${f.areaUnit||'fed'}</div>
+        </div>
       </div>
       <div style="font-size:24px;font-weight:700;color:${f.color}">${f.sisi}</div>
       <div class="level-badge" style="background:${f.color}20;color:${f.color}">${f.levelName}</div>
@@ -1069,26 +852,24 @@ function buildFarmGrid(){
 
 function showFarmDetail(id){
   document.querySelectorAll('.farm-card').forEach(c=>c.classList.remove('selected'));
-  const card=document.getElementById('fc-'+id);
-  if(card)card.classList.add('selected');
-  const f=getAllFarms().find(x=>x.id===id);
-  if(!f)return;
-  const cKeys=['c1','c2','c3','c4','c5'];
-  const cLabels=['C₁ — Irrigation Type & Infrastructure (0.30)','C₂ — Infrastructure & Energy Supply (0.20)','C₃ — Soil & Environmental Conditions (0.15)','C₄ — Crop Type & Economic Sensitivity (0.15)','C₅ — Socioeconomic Readiness (0.20)'];
-  const wts=[0.30,0.20,0.15,0.15,0.20];
-  const colors=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
-  const bars=cKeys.map((k,i)=>`
+  const card = document.getElementById('fc-'+id); if(card) card.classList.add('selected');
+  const f = getAllFarms().find(x=>x.id===id); if(!f) return;
+  const cKeys   = ['c1','c2','c3','c4','c5'];
+  const cLabels = ['C₁ — Irrigation (0.30)','C₂ — Energy (0.20)','C₃ — Soil (0.15)','C₄ — Crop (0.15)','C₅ — Socioeconomic (0.20)'];
+  const wts     = [0.30,0.20,0.15,0.15,0.20];
+  const colors  = ['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
+  const bars = cKeys.map((k,i)=>`
     <div class="crit-row">
       <div class="crit-label">${cLabels[i]}</div>
-      <div class="crit-bar-wrap"><div class="crit-bar" style="width:${f.scores[k]*20}%;background:${colors[i]}"></div></div>
-      <div class="crit-val">${f.scores[k]} × ${wts[i]} = <b>${(f.weighted[k]||0).toFixed?((f.weighted[k]||0).toFixed(2)):f.weighted[k]}</b></div>
+      <div class="crit-bar-wrap"><div class="crit-bar" style="width:${(f.scores||{})[k]*20}%;background:${colors[i]}"></div></div>
+      <div class="crit-val">${(f.scores||{})[k]} × ${wts[i]} = <b>${((f.weighted||{})[k]||0).toFixed(2)}</b></div>
     </div>`).join('');
   document.getElementById('farmDetail').innerHTML=`
     <div class="detail-panel">
       <h3 style="color:${f.color};font-size:15px;margin-bottom:9px">📍 ${f.name}${f.nameEn&&f.nameEn!==f.name?' — '+f.nameEn:''}</h3>
       <div class="detail-grid">
-        <div class="detail-item"><div class="dl">Location</div><div class="dv">${f.gov}</div></div>
-        <div class="detail-item"><div class="dl">Area</div><div class="dv">${(f.area||0).toLocaleString()} ${f.areaUnit||'feddans'}${f.areaUnit==='feddans'?' ('+((f.area||0)*0.42).toFixed(1)+' ha)':''}</div></div>
+        <div class="detail-item"><div class="dl">Location</div><div class="dv">${f.gov||'—'}</div></div>
+        <div class="detail-item"><div class="dl">Area</div><div class="dv">${(f.area||0).toLocaleString()} ${f.areaUnit||'feddans'}</div></div>
         <div class="detail-item"><div class="dl">Crop</div><div class="dv">${f.crop||'—'}</div></div>
         <div class="detail-item"><div class="dl">Water source</div><div class="dv">${f.water||'—'}</div></div>
         <div class="detail-item"><div class="dl">Irrigation</div><div class="dv">${f.irrigation||'—'}</div></div>
@@ -1097,293 +878,286 @@ function showFarmDetail(id){
         <div class="detail-item"><div class="dl">Water quality</div><div class="dv">${f.waterQ||'—'}</div></div>
         ${f.notes?`<div class="detail-item" style="grid-column:1/-1"><div class="dl">Notes</div><div class="dv">${f.notes}</div></div>`:''}
       </div>
-      <div style="font-size:12px;font-weight:600;color:#444;margin-bottom:7px">SISI Calculation</div>
       ${bars}
       <div style="background:${f.color}15;border-radius:9px;padding:10px;text-align:center;margin:10px 0;border:1px solid ${f.color}30">
-        <div style="font-size:12px;font-family:monospace;color:${f.color}">SISI = (0.30×${f.scores.c1}) + (0.20×${f.scores.c2}) + (0.15×${f.scores.c3}) + (0.15×${f.scores.c4}) + (0.20×${f.scores.c5})</div>
+        <div style="font-size:12px;font-family:monospace;color:${f.color}">SISI = (0.30×${(f.scores||{}).c1}) + (0.20×${(f.scores||{}).c2}) + (0.15×${(f.scores||{}).c3}) + (0.15×${(f.scores||{}).c4}) + (0.20×${(f.scores||{}).c5})</div>
         <div style="font-size:30px;font-weight:700;color:${f.color};margin:3px 0">${f.sisi} / 5.00</div>
-        <div style="font-size:12px;color:#555">${levelFull[f.level]||f.levelName||''}</div>
+        <div style="font-size:12px;color:#555">${LF[f.level]||f.levelName||''}</div>
       </div>
-      ${f.builtin?`<div style="margin-top:8px;padding:8px;background:#f5f5f5;border-radius:7px;font-size:11px;color:#555;line-height:1.7">
-        <b>C₅ Profile —</b> Education: ${f.socio.edu} · Digital: ${f.socio.phone} · Credit: ${f.socio.credit} · Cooperative: ${f.socio.coop} · Extension: ${f.socio.ext}
-      </div>`:''}
-      <div class="intervention-box">🔧 <b>Recommended intervention:</b><br>${f.intervention}</div>
+      ${f.builtin&&f.socio?`<div style="padding:8px;background:#f5f5f5;border-radius:7px;font-size:11px;color:#555;line-height:1.7;margin-bottom:8px"><b>C₅:</b> ${f.socio.edu} · ${f.socio.phone} · ${f.socio.credit} · ${f.socio.coop}</div>`:''}
+      <div class="intervention-box">🔧 <b>Recommended intervention:</b><br>${f.intervention||'—'}</div>
       ${!f.builtin?`<div style="margin-top:8px;padding:7px 10px;background:#fce4ec;border-radius:7px;font-size:11px;color:#c62828;display:flex;align-items:center;justify-content:space-between">
-        <span>📍 User-added · ${new Date(f.addedAt||Date.now()).toLocaleDateString()}</span>
-        <button onclick="deleteFarm('${f.id}')" style="background:#c62828;border:none;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;color:#fff;font-weight:700">✕ Remove Farm</button>
+        <span>☁️ Cloud-saved · ${new Date(f.addedAt||Date.now()).toLocaleDateString()}</span>
+        <button onclick="deleteFarm('${f.id}')" style="background:#c62828;border:none;border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;color:#fff;font-weight:700">✕ Delete</button>
       </div>`:''}
     </div>`;
 }
 
-// ═══════ COMPARE ═══════
+// ════════════════════════════════
+// REGISTRY TABLE
+// ════════════════════════════════
+function renderRegistry(){
+  const q = v('registrySearch').toLowerCase();
+  const all = getAllFarms();
+  const filtered = all.filter(f=>!q||(f.name||'').toLowerCase().includes(q)||(f.gov||'').toLowerCase().includes(q));
+  const tbody = document.getElementById('registryBody');
+  const empty = document.getElementById('registryEmpty');
+  const cnt   = document.getElementById('regCount');
+  if(cnt) cnt.textContent = filtered.length+' farms';
+  if(!filtered.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtered.map((f,i)=>`
+    <tr>
+      <td style="color:#aaa">${i+1}</td>
+      <td><b style="color:${f.color}">${f.name}</b>${f.builtin?'<span class="tag tag-builtin">pilot</span>':'<span class="tag tag-user">mine</span>'}</td>
+      <td>${(f.gov||'').split(' — ')[0]}</td>
+      <td style="color:#666">${(f.crop||'').substring(0,20)}</td>
+      <td>${f.area||'—'} ${f.areaUnit||''}</td>
+      <td style="font-family:monospace;font-size:10px">${f.lat||'—'}</td>
+      <td style="font-family:monospace;font-size:10px">${f.lng||'—'}</td>
+      <td style="text-align:center">${(f.scores||{}).c1||'—'}</td>
+      <td style="text-align:center">${(f.scores||{}).c2||'—'}</td>
+      <td style="text-align:center">${(f.scores||{}).c3||'—'}</td>
+      <td style="text-align:center">${(f.scores||{}).c4||'—'}</td>
+      <td style="text-align:center">${(f.scores||{}).c5||'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${f.color}">${f.sisi}</td>
+      <td style="text-align:center"><span class="level-badge" style="background:${f.color}20;color:${f.color};font-size:10px">${f.level}</span></td>
+      <td>${f.builtin
+        ? '<span style="color:#aaa;font-size:11px">built-in</span>'
+        : `<button onclick="deleteFarm('${f.id}')" style="background:#fce4ec;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;color:#c62828">✕</button>`
+      }</td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════
+// MAP
+// ════════════════════════════════
+function initMap(){
+  if(mapInitialized) return;
+  map = L.map('map', {center:[27,30], zoom:5});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+  // Add ALL farms: builtins + user farms
+  getAllFarms().forEach(addMarkerToMap);
+  mapInitialized = true;
+}
+
+function addMarkerToMap(f){
+  if(!map || !mapInitialized) return;
+  if(!f.lat || !f.lng) return;
+  const border = f.builtin ? 'border:3px solid #fff;' : 'border:2.5px dashed #fff;';
+  const icon = L.divIcon({
+    html: `<div style="width:40px;height:40px;border-radius:50%;background:${f.color};${border}display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)">L${f.levelNum||'?'}</div>`,
+    className:'', iconSize:[40,40], iconAnchor:[20,20]
+  });
+  L.marker([f.lat,f.lng],{icon}).addTo(map).bindPopup(buildPopup(f),{maxWidth:300});
+}
+
+function refreshMapMarkers(){
+  if(!map || !mapInitialized) return;
+  // Remove all markers
+  map.eachLayer(l=>{ if(l instanceof L.Marker) map.removeLayer(l); });
+  // Re-add ALL farms (builtins always come back)
+  getAllFarms().forEach(addMarkerToMap);
+}
+
+function buildPopup(f){
+  const cKeys = ['c1','c2','c3','c4','c5'];
+  const cLbls = ['C₁','C₂','C₃','C₄','C₅'];
+  const cols  = ['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
+  const bars  = cKeys.map((k,i)=>`
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+      <span style="font-size:10px;color:#888;min-width:25px">${cLbls[i]}</span>
+      <div style="flex:1;background:#e0e0e0;height:5px;border-radius:2px">
+        <div style="width:${((f.scores||{})[k]||0)*20}%;background:${cols[i]};height:5px;border-radius:2px"></div>
+      </div>
+      <span style="font-size:10px;font-weight:700;min-width:16px">${(f.scores||{})[k]||'—'}</span>
+    </div>`).join('');
+  return `
+    <div style="font-family:Arial;min-width:240px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="width:40px;height:40px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">L${f.levelNum||'?'}</div>
+        <div>
+          <b style="font-size:14px">${f.name}</b>
+          <div style="font-size:11px;color:#666">${f.gov||''}</div>
+          <div style="font-size:11px;color:#888">${f.area?f.area+' '+(f.areaUnit||''):''} ${f.crop?'· '+f.crop.substring(0,20):''}</div>
+        </div>
+      </div>
+      <div style="background:#f5f5f5;border-radius:7px;padding:7px;margin-bottom:7px">
+        <div style="font-size:26px;font-weight:700;color:${f.color}">${f.sisi}</div>
+        <div style="font-size:11px;color:#444">${LF[f.level]||f.levelName||''}</div>
+      </div>
+      ${bars}
+      ${!f.builtin?`<div style="margin-top:6px;font-size:10px;color:#888">☁️ Cloud-saved · ${new Date(f.addedAt||Date.now()).toLocaleDateString()}</div>`:''}
+    </div>`;
+}
+
+// ════════════════════════════════
+// COMPARE
+// ════════════════════════════════
 function buildCompareChart(){
-  const all=getAllFarms();
-  let html=`<div style="margin-bottom:1.2rem"><div style="font-size:13px;font-weight:600;margin-bottom:10px">SISI Score Comparison — All Farms</div>`;
+  const all = getAllFarms();
+  let html = `<div style="margin-bottom:1.2rem"><div style="font-size:13px;font-weight:600;margin-bottom:10px">SISI Score Comparison — All Farms</div>`;
   all.forEach(f=>{
-    const pct=(f.sisi/5*100).toFixed(0);
-    html+=`<div class="compare-bar" data-level="${f.level}">
-      <div style="min-width:130px;font-size:12px;font-weight:500">${f.name}${f.country&&f.country!='EG'?' ['+f.country+']':''}</div>
-      <div class="compare-bar-fill" style="width:${pct}%;background:${f.color}">${f.sisi}</div>
+    html += `<div class="compare-bar" data-level="${f.level}">
+      <div style="min-width:140px;font-size:12px;font-weight:500">${f.name}${!f.builtin?' <small style="color:#2e7d32">(mine)</small>':''}</div>
+      <div class="compare-bar-fill" style="width:${(f.sisi/5*100).toFixed(0)}%;background:${f.color}">${f.sisi}</div>
       <div style="font-size:10px;color:#888">${f.levelName}</div>
     </div>`;
   });
-  html+=`</div>
-  <div style="font-size:13px;font-weight:600;margin-bottom:8px">Criteria Breakdown</div>
-  <div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;min-width:540px">
-  <thead><tr>
-    <th style="text-align:left;padding:7px;background:#f0f4ff">Site</th>
-    <th style="padding:7px;background:#e3f2fd;text-align:center">C₁ (0.30)</th>
-    <th style="padding:7px;background:#e8f5e9;text-align:center">C₂ (0.20)</th>
-    <th style="padding:7px;background:#f3e5f5;text-align:center">C₃ (0.15)</th>
-    <th style="padding:7px;background:#fff8e1;text-align:center">C₄ (0.15)</th>
-    <th style="padding:7px;background:#fce4ec;text-align:center">C₅ (0.20)</th>
-    <th style="padding:7px;background:#f0f4ff;text-align:center;font-weight:700">SISI</th>
-    <th style="padding:7px;background:#f0f4ff;text-align:center">Level</th>
-  </tr></thead><tbody>`;
+  html += `</div><div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;min-width:540px">
+    <thead><tr>
+      <th style="text-align:left;padding:7px;background:#f0f4ff">Site</th>
+      <th style="padding:7px;background:#e3f2fd;text-align:center">C₁</th>
+      <th style="padding:7px;background:#e8f5e9;text-align:center">C₂</th>
+      <th style="padding:7px;background:#f3e5f5;text-align:center">C₃</th>
+      <th style="padding:7px;background:#fff8e1;text-align:center">C₄</th>
+      <th style="padding:7px;background:#fce4ec;text-align:center">C₅</th>
+      <th style="padding:7px;background:#f0f4ff;text-align:center;font-weight:700">SISI</th>
+      <th style="padding:7px;background:#f0f4ff;text-align:center">Level</th>
+    </tr></thead><tbody>`;
+  const cols=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
   all.forEach(f=>{
     const s=f.scores||{};
-    html+=`<tr data-level="${f.level}" style="border-bottom:1px solid #eee">
-      <td style="padding:6px;font-weight:600;color:${f.color}">${f.name}${!f.builtin?' <small style="color:#888">(user)</small>':''}</td>
-      ${['c1','c2','c3','c4','c5'].map((k,i)=>{
-        const cols=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
-        return `<td style="padding:6px;text-align:center">${s[k]||'—'}<div style="width:100%;height:4px;border-radius:2px;background:#eee;margin-top:2px"><div style="width:${(s[k]||0)*20}%;height:4px;background:${cols[i]};border-radius:2px"></div></div></td>`;
-      }).join('')}
+    html += `<tr data-level="${f.level}" style="border-bottom:1px solid #eee">
+      <td style="padding:6px;font-weight:600;color:${f.color}">${f.name}${!f.builtin?' <small style="color:#2e7d32">(mine)</small>':''}</td>
+      ${['c1','c2','c3','c4','c5'].map((k,i)=>`<td style="padding:6px;text-align:center">${s[k]||'—'}<div style="height:4px;background:#eee;border-radius:2px;margin-top:2px"><div style="width:${(s[k]||0)*20}%;height:4px;background:${cols[i]};border-radius:2px"></div></div></td>`).join('')}
       <td style="padding:6px;text-align:center;font-weight:700;color:${f.color}">${f.sisi}</td>
       <td style="padding:6px;text-align:center"><span class="level-badge" style="background:${f.color}20;color:${f.color};font-size:10px">${f.level}</span></td>
     </tr>`;
   });
-  html+=`</tbody></table></div>`;
-  document.getElementById('compareChart').innerHTML=html;
+  html += `</tbody></table></div>`;
+  document.getElementById('compareChart').innerHTML = html;
 }
 
 function filterCompare(level,btn){
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('tr[data-level]').forEach(tr=>{tr.style.opacity=(level==='all'||tr.dataset.level===level)?'1':'0.2';});
-  document.querySelectorAll('.compare-bar').forEach(el=>{el.style.opacity=(level==='all'||el.dataset.level===level)?'1':'0.2';});
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('tr[data-level]').forEach(tr=>{ tr.style.opacity=(level==='all'||tr.dataset.level===level)?'1':'0.2'; });
+  document.querySelectorAll('.compare-bar').forEach(el=>{ el.style.opacity=(level==='all'||el.dataset.level===level)?'1':'0.2'; });
 }
 
-// ═══════ ET₀ / ETc ═══════
+// ════════════════════════════════
+// ET₀ / ETc
+// ════════════════════════════════
 function loadCropKc(){
-  const crop=v('et_crop');
-  const kc=cropKc[crop];if(!kc)return;
-  document.getElementById('kc_ini').value=kc.ini;
-  document.getElementById('kc_mid').value=kc.mid;
-  document.getElementById('kc_end').value=kc.end;
-  document.getElementById('et_days').value=kc.days;
+  const kc=cropKc[v('et_crop')]; if(!kc) return;
+  ['ini','mid','end'].forEach(k=>{ const el=document.getElementById('kc_'+k); if(el) el.value=kc[k]; });
+  const d=document.getElementById('et_days'); if(d) d.value=kc.days;
 }
+
 function loadClimatePreset(){
-  const zone=v('et_zone')||'nile_delta';
-  const p={nile_delta:{et_tmean:22,et_wind:2.5,et_rh:65,et_sun:7.5},upper_egypt:{et_tmean:27,et_wind:2.0,et_rh:40,et_sun:9.5},new_lands:{et_tmean:25,et_wind:3.0,et_rh:35,et_sun:9.0},sinai:{et_tmean:26,et_wind:3.5,et_rh:40,et_sun:9.2},maghreb:{et_tmean:20,et_wind:3.0,et_rh:60,et_sun:8.0},levant:{et_tmean:22,et_wind:2.5,et_rh:60,et_sun:8.5},arabian:{et_tmean:32,et_wind:3.5,et_rh:30,et_sun:10.5},sahel:{et_tmean:30,et_wind:3.0,et_rh:35,et_sun:9.0},south_asia:{et_tmean:26,et_wind:2.0,et_rh:70,et_sun:7.5},mediterranean:{et_tmean:18,et_wind:2.5,et_rh:65,et_sun:7.5}}[zone]||{};
-  Object.entries(p).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+  const p={
+    nile_delta:{et_tmean:22,et_wind:2.5,et_rh:65,et_sun:7.5},
+    upper_egypt:{et_tmean:27,et_wind:2.0,et_rh:40,et_sun:9.5},
+    new_lands:{et_tmean:25,et_wind:3.0,et_rh:35,et_sun:9.0},
+    sinai:{et_tmean:26,et_wind:3.5,et_rh:40,et_sun:9.2},
+    maghreb:{et_tmean:20,et_wind:3.0,et_rh:60,et_sun:8.0},
+    levant:{et_tmean:22,et_wind:2.5,et_rh:60,et_sun:8.5},
+    arabian:{et_tmean:32,et_wind:3.5,et_rh:30,et_sun:10.5},
+    sahel:{et_tmean:30,et_wind:3.0,et_rh:35,et_sun:9.0},
+    south_asia:{et_tmean:26,et_wind:2.0,et_rh:70,et_sun:7.5},
+    mediterranean:{et_tmean:18,et_wind:2.5,et_rh:65,et_sun:7.5}
+  }[v('et_zone')]||{};
+  Object.entries(p).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
 }
-function approxRn(lat,doy,n_sun){
-  const phi=lat*Math.PI/180;
-  const dr=1+0.033*Math.cos(2*Math.PI/365*doy);
-  const ds=0.409*Math.sin(2*Math.PI/365*doy-1.39);
-  const ws=Math.acos(-Math.tan(phi)*Math.tan(ds));
-  const Ra=(24*60/Math.PI)*0.082*dr*(ws*Math.sin(phi)*Math.sin(ds)+Math.cos(phi)*Math.cos(ds)*Math.sin(ws));
-  const N=24/Math.PI*ws;
-  const Rs=(0.25+0.50*(n_sun/N))*Ra;
-  const Rns=0.77*Rs;
-  const sigma=4.903e-9;
-  const Rnl=sigma*(Math.pow(298,4))*(0.34-0.14*Math.sqrt(1.5))*(1.35*(n_sun/N)-0.35);
-  return Math.max(0,Rns-Rnl);
-}
+
 function calcET(){
-  const lat=parseFloat(v('et_lat'))||30;
-  const T=parseFloat(v('et_tmean'))||25;
-  const RH=parseFloat(v('et_rh'))||55;
-  const u2=parseFloat(v('et_wind'))||2.0;
-  const n_sun=parseFloat(v('et_sun'))||8.5;
-  const kc_ini=parseFloat(v('kc_ini'))||0.30;
-  const kc_mid=parseFloat(v('kc_mid'))||1.15;
-  const kc_end=parseFloat(v('kc_end'))||0.25;
-  const days=parseFloat(v('et_days'))||120;
-  const area_ha=parseFloat(v('et_area'))||5;
-  const eff=parseFloat(v('et_eff'))||85;
-  const lf=parseFloat(v('et_lf'))||0.10;
-  const zone=v('et_zone')||'nile_delta';
-  const Rn=approxRn(lat,180,n_sun);
-  const es=0.6108*Math.exp(17.27*T/(T+237.3));
-  const ea=es*(RH/100);
-  const VPD=es-ea;
-  const delta=4098*es/Math.pow(T+237.3,2);
-  const gamma=0.063;
+  const lat=parseFloat(v('et_lat'))||30, T=parseFloat(v('et_tmean'))||25,
+        RH=parseFloat(v('et_rh'))||55, u2=parseFloat(v('et_wind'))||2,
+        n_sun=parseFloat(v('et_sun'))||8.5;
+  const kc_ini=parseFloat(v('kc_ini'))||0.30, kc_mid=parseFloat(v('kc_mid'))||1.15, kc_end=parseFloat(v('kc_end'))||0.25;
+  const days=parseFloat(v('et_days'))||120, area_ha=parseFloat(v('et_area'))||5,
+        eff=parseFloat(v('et_eff'))||85, lf=parseFloat(v('et_lf'))||0.10;
+  const phi=lat*Math.PI/180, dr=1+0.033*Math.cos(2*Math.PI/365*180),
+        ds=0.409*Math.sin(2*Math.PI/365*180-1.39), ws=Math.acos(-Math.tan(phi)*Math.tan(ds));
+  const Ra=(24*60/Math.PI)*0.082*dr*(ws*Math.sin(phi)*Math.sin(ds)+Math.cos(phi)*Math.cos(ds)*Math.sin(ws));
+  const N=24/Math.PI*ws, Rs=(0.25+0.50*(n_sun/N))*Ra, Rns=0.77*Rs,
+        Rnl=4.903e-9*Math.pow(298,4)*(0.34-0.14*Math.sqrt(1.5))*(1.35*(n_sun/N)-0.35),
+        Rn=Math.max(0,Rns-Rnl);
+  const es=0.6108*Math.exp(17.27*T/(T+237.3)), ea=es*(RH/100), VPD=es-ea,
+        delta=4098*es/Math.pow(T+237.3,2), gamma=0.063;
   const ET0=Math.max(0,(0.408*delta*Rn+gamma*(900/(T+273))*u2*VPD)/(delta+gamma*(1+0.34*u2)));
-  const kc_avg=(kc_ini+kc_mid*2+kc_end)/4;
-  const ETc_d=ET0*kc_avg;
-  const ETc_season=ETc_d*days;
-  const gross_mm=ETc_season/(eff/100)*(1+lf);
-  const water_m3=(gross_mm/1000)*area_ha*10000;
-  const peak_ETc=ET0*kc_mid;
+  const kc_avg=(kc_ini+kc_mid*2+kc_end)/4, ETc_d=ET0*kc_avg, ETc_s=ETc_d*days,
+        gross_mm=ETc_s/(eff/100)*(1+lf), water_m3=gross_mm/1000*area_ha*10000, peak=ET0*kc_mid;
   document.getElementById('etResultsInner').innerHTML=`
     <div class="et-grid">
-      <div class="et-card"><div class="ev" style="color:#1565c0">${ET0.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">ET₀ Penman-Monteith</div></div>
-      <div class="et-card"><div class="ev" style="color:#2e7d32">${ETc_d.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">ETc Daily (Kc avg=${kc_avg.toFixed(2)})</div></div>
-      <div class="et-card"><div class="ev" style="color:#9b59b6">${peak_ETc.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">Peak ETc (Kc_mid=${kc_mid})</div></div>
-      <div class="et-card"><div class="ev" style="color:#e65100">${ETc_season.toFixed(0)}</div><div class="eu">mm</div><div class="el">ETc Seasonal (${days} days)</div></div>
-      <div class="et-card"><div class="ev" style="color:#2e7d32">${(water_m3/1000).toFixed(1)}</div><div class="eu">×10³ m³</div><div class="el">Gross Irrigation (${area_ha} ha)</div></div>
-      <div class="et-card"><div class="ev" style="color:#c62828">${gross_mm.toFixed(0)}</div><div class="eu">mm</div><div class="el">Gross Seasonal Depth</div></div>
+      <div class="et-card"><div class="ev" style="color:#1565c0">${ET0.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">ET₀ FAO-PM</div></div>
+      <div class="et-card"><div class="ev" style="color:#2e7d32">${ETc_d.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">ETc daily</div></div>
+      <div class="et-card"><div class="ev" style="color:#9b59b6">${peak.toFixed(2)}</div><div class="eu">mm/day</div><div class="el">Peak ETc</div></div>
+      <div class="et-card"><div class="ev" style="color:#e65100">${ETc_s.toFixed(0)}</div><div class="eu">mm</div><div class="el">Seasonal ETc</div></div>
+      <div class="et-card"><div class="ev" style="color:#2e7d32">${(water_m3/1000).toFixed(1)}</div><div class="eu">×10³ m³</div><div class="el">Gross Irrig.</div></div>
+      <div class="et-card"><div class="ev" style="color:#c62828">${gross_mm.toFixed(0)}</div><div class="eu">mm</div><div class="el">Gross depth</div></div>
     </div>
-    <div class="formula-box" style="margin-top:10px">
-      ET₀ = <b>${ET0.toFixed(3)} mm/day</b> &nbsp;|&nbsp; ETc_peak = ${kc_mid} × ${ET0.toFixed(2)} = <b>${peak_ETc.toFixed(2)} mm/day</b><br>
-      Total Water = ETc_seasonal / Eff × (1+LF) = <b>${gross_mm.toFixed(0)} mm → ${(water_m3/1000).toFixed(1)} × 10³ m³/season</b> for ${area_ha} ha
-    </div>`;
-  renderMonthlyET(zone,kc_mid);
-  renderIrrigSchedule(ET0,kc_ini,kc_mid,kc_end,days,eff,lf,area_ha);
-}
-function renderMonthlyET(zone,kc_mid){
-  const data=monthlyET0[zone]||monthlyET0.nile_delta;
-  const mx=Math.max(...data);
-  const rows=MONTHS.map((m,i)=>{
-    const et=data[i];
-    const etc=(et*kc_mid).toFixed(2);
-    const pct=Math.round(et/mx*100);
-    return `<tr><td style="font-weight:500">${m}</td><td>${et.toFixed(1)}</td><td>${etc}</td>
-      <td><div style="background:#e5e5e5;height:11px;border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#1565c0,#2ecc71)"></div></div></td>
-      <td>${(et*30).toFixed(0)}</td><td>${(et*kc_mid*30).toFixed(0)}</td></tr>`;
-  }).join('');
+    <div class="formula-box" style="margin-top:10px">ET₀ = <b>${ET0.toFixed(3)} mm/day</b> | Peak ETc = <b>${peak.toFixed(2)} mm/day</b> | Total = <b>${(water_m3/1000).toFixed(1)}×10³ m³/season</b> for ${area_ha} ha</div>`;
+  const data=monthlyET0[v('et_zone')]||monthlyET0.nile_delta, mx=Math.max(...data);
   document.getElementById('monthlyET').innerHTML=`
     <div style="overflow-x:auto"><table class="monthly-table">
-      <thead><tr><th>Month</th><th>ET₀ mm/d</th><th>ETc mm/d</th><th>Relative Demand</th><th>ET₀/Month mm</th><th>ETc/Month mm</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-    <div style="font-size:10px;color:#888;margin-top:4px">Zone: ${zone.replace('_',' ')} · ETc with Kc_mid=${kc_mid}</div>`;
-}
-function renderIrrigSchedule(ET0,kc_ini,kc_mid,kc_end,days,eff,lf,area_ha){
-  const ini_d=Math.round(days*.2),dev_d=Math.round(days*.2),mid_d=Math.round(days*.4),end_d=days-Math.round(days*.2)-Math.round(days*.2)-Math.round(days*.4);
-  const phases=[
-    {name:'Initial',days:ini_d,kc:kc_ini,color:'#3498db'},
-    {name:'Development',days:dev_d,kc:+((kc_ini+kc_mid)/2).toFixed(2),color:'#2ecc71'},
-    {name:'Mid-Season',days:mid_d,kc:kc_mid,color:'#f39c12'},
-    {name:'Late/End',days:end_d,kc:kc_end,color:'#9b59b6'}
-  ];
-  const rows=phases.map(p=>{
-    const ETc_d=(ET0*p.kc).toFixed(2);
-    const depth=(ET0*p.kc/(eff/100)*(1+lf)).toFixed(1);
-    const total=(p.days*ET0*p.kc).toFixed(0);
-    const water=(p.days*ET0*p.kc/1000*area_ha*10000*(1+lf)/(eff/100)).toFixed(0);
-    const freq=Math.max(1,Math.round(50/(ET0*p.kc)));
-    return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:5px"></span>${p.name}</td>
-      <td style="text-align:center">${p.days}</td><td style="text-align:center">${p.kc}</td>
-      <td style="text-align:center">${ETc_d}</td><td style="text-align:center">${depth}</td>
-      <td style="text-align:center">${total}</td><td style="text-align:center">${water}</td>
-      <td style="text-align:center;color:#1565c0;font-weight:600">Every ${freq} days</td></tr>`;
-  }).join('');
-  document.getElementById('irrigSchedule').innerHTML=`
-    <div style="overflow-x:auto"><table class="monthly-table">
-      <thead><tr><th>Phase</th><th>Days</th><th>Kc</th><th>ETc mm/d</th><th>Net Depth mm/event</th><th>Total mm</th><th>Total m³</th><th>Frequency</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-    <div style="font-size:10px;color:#888;margin-top:4px">Efficiency: ${eff}% · Leaching Fraction: ${lf} · FAO-56 Penman-Monteith</div>`;
+      <thead><tr><th>Month</th><th>ET₀ mm/d</th><th>ETc mm/d</th><th>Demand</th><th>ET₀/Month</th><th>ETc/Month</th></tr></thead>
+      <tbody>${MONTHS.map((m,i)=>`
+        <tr><td>${m}</td><td>${data[i].toFixed(1)}</td><td>${(data[i]*kc_mid).toFixed(2)}</td>
+        <td><div style="background:#e5e5e5;height:10px;border-radius:3px"><div style="width:${Math.round(data[i]/mx*100)}%;height:10px;background:linear-gradient(90deg,#1565c0,#2ecc71)"></div></div></td>
+        <td>${(data[i]*30).toFixed(0)}</td><td>${(data[i]*kc_mid*30).toFixed(0)}</td></tr>`).join('')}
+      </tbody>
+    </table></div>`;
 }
 
-// ═══════ EXPORTS ═══════
+// ════════════════════════════════
+// EXPORTS
+// ════════════════════════════════
 function exportCSV(){
   const all=getAllFarms();
-  const rows=[['#','Name','Country','Governorate','Region','Crop','Area','Area_Unit','Latitude','Longitude','C1','C2','C3','C4','C5','SISI','Level','Level_Name','Intervention','Notes','Type','Added_At']];
-  all.forEach((f,i)=>{
-    const s=f.scores||{};
-    rows.push([i+1,f.name,f.country||'EG',(f.gov||'').split(' — ')[0],f.region||'',f.crop||'',f.area||'',f.areaUnit||'',f.lat||'',f.lng||'',s.c1||'',s.c2||'',s.c3||'',s.c4||'',s.c5||'',f.sisi,f.level,f.levelName||'',(f.intervention||'').replace(/\n/g,' '),f.notes||'',f.builtin?'Pilot':'User',f.addedAt?new Date(f.addedAt).toLocaleDateString():''
-    ]);
+  const rows=[['#','Name','Country','Gov','Crop','Area','Unit','Lat','Lng','C1','C2','C3','C4','C5','SISI','Level','Type']];
+  all.forEach((f,i)=>{ const s=f.scores||{};
+    rows.push([i+1,f.name,f.country||'EG',(f.gov||'').split(' — ')[0],f.crop||'',f.area||'',f.areaUnit||'',f.lat||'',f.lng||'',s.c1||'',s.c2||'',s.c3||'',s.c4||'',s.c5||'',f.sisi,f.level,f.builtin?'Pilot':'Mine']);
   });
-  const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-  dlBlob('\uFEFF'+csv,'text/csv',`SISI_Registry_${new Date().toISOString().slice(0,10)}.csv`);
+  dlBlob('\uFEFF'+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',`SISI_${new Date().toISOString().slice(0,10)}.csv`);
 }
-
 function exportGeoJSON(){
-  const all=getAllFarms();
-  const gj={type:'FeatureCollection',name:'SISI Global Farm Registry',crs:{type:'name',properties:{name:'urn:ogc:def:crs:OGC:1.3:CRS84'}},features:all.filter(f=>f.lat&&f.lng).map(f=>({
-    type:'Feature',
-    geometry:{type:'Point',coordinates:[f.lng,f.lat]},
-    properties:{name:f.name,country:f.country||'EG',governorate:(f.gov||'').split(' — ')[0],region:f.region||'',crop:f.crop||'',area:f.area||0,areaUnit:f.areaUnit||'',c1:f.scores?.c1,c2:f.scores?.c2,c3:f.scores?.c3,c4:f.scores?.c4,c5:f.scores?.c5,sisi:f.sisi,level:f.level,levelName:f.levelName||'',color:f.color,type:f.builtin?'Pilot':'User',notes:f.notes||'',addedAt:f.addedAt||''}
-  }))};
-  dlBlob(JSON.stringify(gj,null,2),'application/json',`SISI_Registry_${new Date().toISOString().slice(0,10)}.geojson`);
+  const gj={type:'FeatureCollection',features:getAllFarms().filter(f=>f.lat&&f.lng).map(f=>({type:'Feature',geometry:{type:'Point',coordinates:[f.lng,f.lat]},properties:{name:f.name,sisi:f.sisi,level:f.level,levelName:f.levelName,country:f.country,gov:f.gov,crop:f.crop,type:f.builtin?'pilot':'user'}}))};
+  dlBlob(JSON.stringify(gj,null,2),'application/json',`SISI_${new Date().toISOString().slice(0,10)}.geojson`);
 }
-
 function exportKML(){
   const all=getAllFarms().filter(f=>f.lat&&f.lng);
-  const colorKML={L1:'ff3c3ce7',L2:'ff22b0e6',L3:'ff12c4f1',L4:'ff71cc2e',L5:'ffb659b9'};
-  let styles='';
-  ['L1','L2','L3','L4','L5'].forEach(l=>{
-    styles+=`<Style id="${l}"><IconStyle><color>${colorKML[l]}</color><scale>1.1</scale></IconStyle></Style>`;
-  });
-  let placemarks='';
-  all.forEach(f=>{
-    const desc=`<![CDATA[<table border="1" cellpadding="4" style="border-collapse:collapse;font-family:Arial;font-size:12px">
-      <tr><td><b>Country</b></td><td>${f.country||'EG'}</td></tr>
-      <tr><td><b>Governorate</b></td><td>${(f.gov||'').split(' — ')[0]}</td></tr>
-      <tr><td><b>Crop</b></td><td>${f.crop||'—'}</td></tr>
-      <tr><td><b>Area</b></td><td>${f.area||'—'} ${f.areaUnit||''}</td></tr>
-      <tr bgcolor="#f5f5f5"><td><b>SISI Score</b></td><td><b>${f.sisi} / 5.00</b></td></tr>
-      <tr bgcolor="#f5f5f5"><td><b>Level</b></td><td>${f.level} — ${f.levelName||''}</td></tr>
-      <tr><td><b>C₁</b></td><td>${f.scores?.c1||'—'}</td></tr>
-      <tr><td><b>C₂</b></td><td>${f.scores?.c2||'—'}</td></tr>
-      <tr><td><b>C₃</b></td><td>${f.scores?.c3||'—'}</td></tr>
-      <tr><td><b>C₄</b></td><td>${f.scores?.c4||'—'}</td></tr>
-      <tr><td><b>C₅</b></td><td>${f.scores?.c5||'—'}</td></tr>
-      <tr><td><b>Intervention</b></td><td>${f.intervention||'—'}</td></tr>
-      <tr><td><b>Type</b></td><td>${f.builtin?'Pilot Site':'User-added'}</td></tr>
-      </table>]]>`;
-    placemarks+=`<Placemark><name>${f.name}</name><description>${desc}</description><styleUrl>#${f.level}</styleUrl><Point><coordinates>${f.lng},${f.lat},0</coordinates></Point></Placemark>\n`;
-  });
-  const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>SISI Global Farm Registry — ${new Date().toISOString().slice(0,10)}</name><description>Smart Irrigation Suitability Index · WMRI 2026 · ${all.length} farms</description>${styles}<Folder><name>SISI Farms (${all.length})</name>${placemarks}</Folder></Document></kml>`;
-  dlBlob(kml,'application/vnd.google-earth.kml+xml',`SISI_Registry_${new Date().toISOString().slice(0,10)}.kml`);
+  const placemarks=all.map(f=>`<Placemark><name>${f.name}</name><description><![CDATA[SISI: ${f.sisi} | ${f.level} | ${f.gov}]]></description><Point><coordinates>${f.lng},${f.lat},0</coordinates></Point></Placemark>`).join('');
+  dlBlob(`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>SISI Registry</name>${placemarks}</Document></kml>`,'application/vnd.google-earth.kml+xml',`SISI_${new Date().toISOString().slice(0,10)}.kml`);
 }
+function dlBlob(content,type,filename){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
 
-function exportMapImage(){
-  alert('📸 Map Image Export:\n\n1. Press F11 or Ctrl+Shift+M (developer tools) to maximize map\n2. Use your OS screenshot tool:\n   • Windows: Win+Shift+S\n   • Mac: Cmd+Shift+4\n   • Linux: Print Screen\n\nOR: For high-quality map export, use the GeoJSON file in QGIS → Print Layout → Export as PNG/JPG at any resolution.');
-}
-
-function dlBlob(content,type,filename){
-  const blob=new Blob([content],{type});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download=filename;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-}
-
-// ═══════ TAB SWITCH ═══════
-const tabOrder=['map','farms','calc','et','compare','levels'];
+// ════════════════════════════════
+// TABS
+// ════════════════════════════════
+const tabOrder=['map','farms','calc','et','compare','levels','admin'];
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabOrder[i]===tab));
   document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
-  const el=document.getElementById('tab-'+tab);if(el)el.classList.add('active');
-  if(tab==='map'&&!map)setTimeout(initMap,100);
-  if(tab==='map'&&map)setTimeout(()=>map.invalidateSize(),150);
-  if(tab==='compare')buildCompareChart();
-  if(tab==='farms')buildFarmGrid();
-  if(tab==='et'){loadCropKc();calcET();}
+  const el=document.getElementById('tab-'+tab); if(el) el.classList.add('active');
+  if(tab==='map'){
+    if(!mapInitialized) setTimeout(initMap,100);
+    else setTimeout(()=>map.invalidateSize(),150);
+  }
+  if(tab==='compare') buildCompareChart();
+  if(tab==='farms')   buildFarmGrid();
+  if(tab==='et'){ loadCropKc(); calcET(); }
 }
 
-// ═══════ OFFLINE AWARENESS ═══════
-window.addEventListener('offline',()=>setChip('offline'));
-window.addEventListener('online',()=>{saveAll();setChip('saved');});
-window.addEventListener('beforeunload',()=>saveAll());
-window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveAll();});
-
-// ═══════ INIT ═══════
-window.addEventListener('load',async ()=>{
+// ════════════════════════════════
+// INIT
+// ════════════════════════════════
+window.addEventListener('load', async()=>{
   updateGovList('EG');
-  loadAll();
-  buildFarmGrid();
-  calcSISI();
-  loadCropKc();
-  renderRegistry();
-  setTimeout(initMap,300);
-  setTimeout(calcET,500);
-  setInterval(saveAll,30000);
 
-  // Check if already logged in (session persists in browser)
-  const sb = getSB();
-  if(sb){
-    const {data:{session}} = await sb.auth.getSession();
-    if(session && session.user){
-      document.getElementById('authScreen').style.display = 'none';
-      setCloudChip('synced','☁ Signed in');
-      await loadCloudFarms();
-    }
+  const {data:{session}} = await sb.auth.getSession();
+  document.getElementById('loadingOverlay').style.display='none';
+
+  if(session?.user){
+    await onLogin(session.user);
+  } else {
+    document.getElementById('authScreen').style.display='flex';
   }
+
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN' && session)  await onLogin(session.user);
+    if(event==='SIGNED_OUT'){ document.getElementById('mainApp').style.display='none'; document.getElementById('authScreen').style.display='flex'; }
+  });
 });
 </script>
 </body>
