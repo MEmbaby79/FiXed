@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SISI — Smart Irrigation Suitability Index | Secure Registry</title>
+<title>SISI Global — Smart Irrigation Suitability Index | Egypt GIS Registry</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
@@ -933,62 +932,26 @@ function renderRegistry(){
 // MAP
 // ════════════════════════════════
 function initMap(){
-  if(mapInitialized) return;
-  map = L.map('map', {center:[27,30], zoom:5});
+  if(map)return;
+  map=L.map('map',{center:[27,30],zoom:5});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
-  // Add ALL farms: builtins + user farms
   getAllFarms().forEach(addMarkerToMap);
-  mapInitialized = true;
 }
-
 function addMarkerToMap(f){
-  if(!map || !mapInitialized) return;
-  if(!f.lat || !f.lng) return;
-  const border = f.builtin ? 'border:3px solid #fff;' : 'border:2.5px dashed #fff;';
-  const icon = L.divIcon({
-    html: `<div style="width:40px;height:40px;border-radius:50%;background:${f.color};${border}display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)">L${f.levelNum||'?'}</div>`,
-    className:'', iconSize:[40,40], iconAnchor:[20,20]
-  });
+  if(!map||!f.lat||!f.lng)return;
+  const dash=!f.builtin?'border:2.5px dashed #fff;':'border:3px solid #fff;';
+  const icon=L.divIcon({html:`<div style="width:40px;height:40px;border-radius:50%;background:${f.color};${dash}display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)">L${f.levelNum||'?'}</div>`,className:'',iconSize:[40,40],iconAnchor:[20,20]});
   L.marker([f.lat,f.lng],{icon}).addTo(map).bindPopup(buildPopup(f),{maxWidth:300});
 }
-
 function refreshMapMarkers(){
-  if(!map || !mapInitialized) return;
-  // Remove all markers
-  map.eachLayer(l=>{ if(l instanceof L.Marker) map.removeLayer(l); });
-  // Re-add ALL farms (builtins always come back)
+  if(!map)return;
+  map.eachLayer(l=>{if(l instanceof L.Marker)map.removeLayer(l);});
   getAllFarms().forEach(addMarkerToMap);
 }
-
 function buildPopup(f){
-  const cKeys = ['c1','c2','c3','c4','c5'];
-  const cLbls = ['C₁','C₂','C₃','C₄','C₅'];
-  const cols  = ['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
-  const bars  = cKeys.map((k,i)=>`
-    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
-      <span style="font-size:10px;color:#888;min-width:25px">${cLbls[i]}</span>
-      <div style="flex:1;background:#e0e0e0;height:5px;border-radius:2px">
-        <div style="width:${((f.scores||{})[k]||0)*20}%;background:${cols[i]};height:5px;border-radius:2px"></div>
-      </div>
-      <span style="font-size:10px;font-weight:700;min-width:16px">${(f.scores||{})[k]||'—'}</span>
-    </div>`).join('');
-  return `
-    <div style="font-family:Arial;min-width:240px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-        <div style="width:40px;height:40px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">L${f.levelNum||'?'}</div>
-        <div>
-          <b style="font-size:14px">${f.name}</b>
-          <div style="font-size:11px;color:#666">${f.gov||''}</div>
-          <div style="font-size:11px;color:#888">${f.area?f.area+' '+(f.areaUnit||''):''} ${f.crop?'· '+f.crop.substring(0,20):''}</div>
-        </div>
-      </div>
-      <div style="background:#f5f5f5;border-radius:7px;padding:7px;margin-bottom:7px">
-        <div style="font-size:26px;font-weight:700;color:${f.color}">${f.sisi}</div>
-        <div style="font-size:11px;color:#444">${LF[f.level]||f.levelName||''}</div>
-      </div>
-      ${bars}
-      ${!f.builtin?`<div style="margin-top:6px;font-size:10px;color:#888">☁️ Cloud-saved · ${new Date(f.addedAt||Date.now()).toLocaleDateString()}</div>`:''}
-    </div>`;
+  const cKeys=['c1','c2','c3','c4','c5'];const cLbls=['C₁','C₂','C₃','C₄','C₅'];const cols=['#3498db','#2ecc71','#9b59b6','#f39c12','#e74c3c'];
+  const bars=cKeys.map((k,i)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="font-size:10px;color:#888;min-width:25px">${cLbls[i]}</span><div style="flex:1;background:#e0e0e0;height:5px;border-radius:2px"><div style="width:${(f.scores||{})[k]*20||0}%;background:${cols[i]};height:5px;border-radius:2px"></div></div><span style="font-size:10px;font-weight:700;min-width:16px">${(f.scores||{})[k]||'—'}</span></div>`).join('');
+  return `<div style="font-family:Arial;min-width:240px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><div style="width:40px;height:40px;border-radius:50%;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">L${f.levelNum||'?'}</div><div><b style="font-size:14px">${f.name}</b><div style="font-size:11px;color:#666">${f.gov||''}</div><div style="font-size:11px;color:#888">${f.area?f.area+' '+(f.areaUnit||''):''} ${f.crop?'· '+f.crop.substring(0,20):''}</div></div></div><div style="background:#f5f5f5;border-radius:7px;padding:7px;margin-bottom:7px"><div style="font-size:26px;font-weight:700;color:${f.color}">${f.sisi}</div><div style="font-size:11px;color:#444">${LF[f.level]||f.levelName||''}</div></div>${bars}</div>`;
 }
 
 // ════════════════════════════════
